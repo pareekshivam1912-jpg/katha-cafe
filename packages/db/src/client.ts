@@ -144,3 +144,8 @@ export async function resetDbInstance(): Promise<void> {
     activeClient = null;
   }
 }
+
+export async function createIsolatedDb(): Promise<DbClient> {
+  const pgliteInstance = new PGlite();
+  return new PGliteClientAdapter(pgliteInstance);
+}

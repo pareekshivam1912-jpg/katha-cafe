@@ -27,7 +27,7 @@ This repository documentation defines the Katha Cafe website, QR table ordering,
 - **Phase 6 (POS and Kitchen Display System):** Done. Staff POS order creation (`/api/pos/orders`), Cashier incoming QR order review & accept/reject (`/api/pos/orders/pending`), Kitchen Display System queue (`/api/kds/orders`), linear state machine progression (`ACCEPTED` -> `PREPARING` -> `READY` -> `SERVED`), and Next.js `/pos` and `/kds` responsive web interfaces. All 45 workspace tests passing.
 - **Phase 7 (Counter Payment Recording & Reconciliation):** Done. Counter payment recording (`/api/pos/orders/:id/payments`) supporting `CASH`, `UPI_AT_COUNTER`, and `CARD_AT_COUNTER`, partial unique index constraint (`idx_payments_order_paid`), idempotency deduplication, underpayment prevention, and Cashier settlement UI. All 55 workspace tests passing.
 - **Phase 8 (Inventory Tracking & Sales Reporting):** Done. Inventory stock tracking with low-stock threshold alerts, manual movement audit logs (`PURCHASE`, `WASTE`, `ADJUSTMENT`, `RETURN`), daily sales aggregation joined strictly with settled payments, product-mix breakdown, and web admin dashboard (`/admin`). All 68 workspace tests passing.
-- **Phase 9 (Hardening, Backup & Release Readiness):** Todo. Local backup/restore verification, security review, and release runbook.
+- **Phase 9 (Hardening, Backup & Release Readiness):** Done. Database backup & restore utilities implemented in `@katha-cafe/db` and verified (T-12 passed). HTTP security defense-in-depth headers and `x-powered-by` suppression verified. Customer privacy protections enforced. Production builds successful across all packages with 76/76 workspace tests passing. Release runbook finalized.
 
 ## Local development instructions
 
@@ -44,7 +44,7 @@ This repository documentation defines the Katha Cafe website, QR table ordering,
    ```bash
    npm install
    ```
-3. Run complete test suite:
+3. Run complete test suite (76/76 passing):
    ```bash
    npm test
    ```
@@ -55,6 +55,26 @@ This repository documentation defines the Katha Cafe website, QR table ordering,
 5. Start development servers:
    - Backend API: `npm --workspace=@katha-cafe/api run dev` (runs on http://localhost:4000)
    - Public Website: `npm --workspace=@katha-cafe/web run dev` (runs on http://localhost:3000)
+
+### Database Backup and Restore
+
+- **Export backup to file:**
+  ```bash
+  npm --prefix packages/db run backup [path/to/backup.json]
+  ```
+- **Restore database from backup:**
+  ```bash
+  npm --prefix packages/db run restore [path/to/backup.json]
+  ```
+
+### Seed Staff Credentials (MOCK)
+
+| Username | Role | Password | Primary Interface |
+|---|---|---|---|
+| `admin_mock` | ADMIN | `Admin@Katha2026!` | `/admin` (Menu & Inventory Management) |
+| `manager_mock` | MANAGER | `Manager@Katha2026!` | `/admin` & `/pos` |
+| `cashier_mock` | CASHIER | `Cashier@Katha2026!` | `/pos` (POS Order Review & Counter Settlement) |
+| `kitchen_mock` | KITCHEN | `Kitchen@Katha2026!` | `/kds` (Kitchen Display System) |
 
 ## Café details supplied for this project
 

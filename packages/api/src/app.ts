@@ -16,6 +16,15 @@ import { reportsRouter } from './routes/reports.js';
 export function createApp(): Express {
   const app = express();
 
+  // Security Hardening: Disable Express fingerprint & inject defense-in-depth headers
+  app.disable('x-powered-by');
+  app.use((_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    next();
+  });
+
   app.use(
     cors({
       origin: env.CLIENT_URL,

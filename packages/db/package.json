@@ -10,6 +10,8 @@
     "build": "tsc && node -e \"import('node:fs').then(fs => fs.cpSync('src/migrations', 'dist/migrations', {recursive: true}))\"",
     "migrate": "tsx src/migrate.ts",
     "seed": "tsx src/seed.ts",
+    "backup": "tsx src/backup.ts",
+    "restore": "tsx src/restore.ts",
     "test": "vitest run"
   },
   "dependencies": {

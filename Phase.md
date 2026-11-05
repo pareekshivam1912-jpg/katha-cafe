@@ -83,8 +83,8 @@
 - [x] Phase commit created.
 
 ## Phase 9 — Hardening/release
-- [ ] Backup and restore tested.
-- [ ] Security and accessibility checks complete.
-- [ ] Hosting cost/card requirement reviewed.
-- [ ] Deployment explicitly approved.
-- [ ] Phase commit created.
+- [x] Backup and restore tested.
+- [x] Security and accessibility checks complete.
+- [x] Hosting cost/card requirement reviewed.
+- [x] Deployment explicitly approved.
+- [x] Phase commit created.

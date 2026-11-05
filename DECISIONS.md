@@ -144,6 +144,16 @@ Record every material technical/product decision here.
 - **Reason:** Fulfills PRD Sections 4.8 & 4.9, satisfies Phase 8 acceptance criteria, and guarantees stock and cash reconciliation accuracy.
 - **Status:** Accepted and verified in Phase 8.
 
+## D-017 — Backup/restore utility, security hardening, and production release readiness
+- **Decision:**
+  1. **Deterministic Backup & Restore:** Implemented `exportBackupToFile` and `restoreBackupFromFile` in `@katha-cafe/db` with topological foreign-key dependency ordering (`BACKUP_TABLES_ORDER`). Backups generate portable, self-contained JSON archives with metadata (timestamp, table row counts, cafe metadata). Restores operate within an atomic transaction with reverse-order table clearing and forward-order insertion.
+  2. **Automated Restoration Verification (T-12):** Created `packages/db/tests/backup.test.ts`, proving that live database state (staff, menu, tables, sessions, customers, orders, payments, inventory, and JSONB audit logs) can be exported and fully restored into a clean, isolated database instance with 100% data fidelity.
+  3. **Security Defense-in-Depth:** Stripped `X-Powered-By: Express` fingerprinting from the API and injected security headers (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`). Verified that customer mobile numbers are never leaked over unauthenticated public status endpoints.
+  4. **Hosting & Release Runbook:** Confirmed zero-card, local-first production deployment model for Katha Cafe on a café-owned PC or local mini-server using standard Node.js process management (PM2) or Docker Compose, completely eliminating third-party cloud hosting fees and card-required subscriptions.
+- **Dependencies Added:** None (built with standard Node.js APIs and existing monorepo stack).
+- **Reason:** Fulfills PRD Section 11 & 12, satisfies all Phase 9 acceptance criteria, and completes project release readiness.
+- **Status:** Accepted and verified in Phase 9.
+
 
 
 

@@ -21,7 +21,18 @@ export const Footer: React.FC = () => {
           </div>
         </div>
 
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-surface-ivory/60 gap-4">
+        <div className="py-4 flex flex-wrap items-center justify-center gap-4 text-xs text-brand-goldSoft/70 border-b border-brand-gold/10">
+          <span className="font-medium text-surface-ivory/80">Staff & Operations:</span>
+          <a href="/pos" className="hover:text-brand-gold transition-colors">Cashier POS</a>
+          <span>•</span>
+          <a href="/kds" className="hover:text-brand-gold transition-colors">Kitchen Display (KDS)</a>
+          <span>•</span>
+          <a href="/admin" className="hover:text-brand-gold transition-colors">Admin & Inventory</a>
+          <span>•</span>
+          <a href="/order" className="hover:text-brand-gold transition-colors">Customer QR Order</a>
+        </div>
+
+        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-surface-ivory/60 gap-4">
           <p>© {new Date().getFullYear()} Katha Cafe. All rights reserved. B-82A Ganga Jamuna Colony, Murlipura, Jaipur.</p>
           <p>Dialogues • Chai • Stories</p>
         </div>

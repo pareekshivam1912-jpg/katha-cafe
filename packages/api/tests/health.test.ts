@@ -18,6 +18,15 @@ describe('API Health and Base Routes', () => {
     expect(new Date(res.body.timestamp).toISOString()).toBe(res.body.timestamp);
   });
 
+  it('GET /api/health should return security headers and omit x-powered-by', async () => {
+    const res = await request(app).get('/api/health');
+
+    expect(res.headers['x-powered-by']).toBeUndefined();
+    expect(res.headers['x-content-type-options']).toBe('nosniff');
+    expect(res.headers['x-frame-options']).toBe('DENY');
+    expect(res.headers['referrer-policy']).toBe('strict-origin-when-cross-origin');
+  });
+
   it('GET /api/nonexistent should return 404 Not Found', async () => {
     const res = await request(app).get('/api/nonexistent');
 
