@@ -214,13 +214,17 @@ export default function PosPage() {
   };
 
   useEffect(() => {
-    if (activeTab === 'pending' && staffToken) {
-      fetchPendingOrders();
-      const interval = setInterval(fetchPendingOrders, 10000);
-      return () => clearInterval(interval);
-    } else if (activeTab === 'payments' && staffToken) {
+    if (!staffToken) return;
+
+    // Always poll pending orders so the incoming QR badge updates in real time
+    fetchPendingOrders();
+    const interval = setInterval(fetchPendingOrders, 5000);
+
+    if (activeTab === 'payments') {
       fetchSettledPayments();
     }
+
+    return () => clearInterval(interval);
   }, [activeTab, staffToken]);
 
   // Cart operations
@@ -473,8 +477,8 @@ export default function PosPage() {
         >
           <span>📥 Incoming QR Orders</span>
           {pendingOrders.length > 0 && (
-            <span className="bg-[#C6922E] text-[#063B27] font-bold text-xs px-2 py-0.5 rounded-full">
-              {pendingOrders.length}
+            <span className="bg-[#C6922E] text-[#063B27] font-bold text-xs px-2 py-0.5 rounded-full animate-pulse shadow">
+              {pendingOrders.length} New
             </span>
           )}
         </button>

@@ -27,7 +27,7 @@ export function normalizeIndianMobile(raw: string): string | null {
 }
 
 export const customerIdentificationSchema = z.object({
-  sessionId: z.string().uuid('Invalid session ID'),
+  sessionId: z.string().min(1, 'Session ID is required'),
   fullName: z
     .string()
     .trim()

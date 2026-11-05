@@ -36,7 +36,7 @@ kdsRouter.get('/orders', async (_req: Request, res: Response) => {
       FROM orders o
       LEFT JOIN table_sessions ts ON o.table_session_id = ts.id
       LEFT JOIN restaurant_tables t ON ts.table_id = t.id
-      WHERE o.status IN ('ACCEPTED', 'PREPARING', 'READY')
+      WHERE o.status IN ('SUBMITTED', 'ACCEPTED', 'PREPARING', 'READY')
       ORDER BY o.created_at ASC`
     );
 
@@ -128,19 +128,20 @@ kdsRouter.patch('/orders/:id/status', async (req: Request, res: Response) => {
     const currentStatus = order.status;
 
     // Strict state-machine validation
-    const validTransitions: Record<string, string> = {
-      ACCEPTED: 'PREPARING',
-      PREPARING: 'READY',
-      READY: 'SERVED',
+    const validTransitions: Record<string, string[]> = {
+      SUBMITTED: ['ACCEPTED', 'PREPARING'],
+      ACCEPTED: ['PREPARING'],
+      PREPARING: ['READY'],
+      READY: ['SERVED'],
     };
 
-    const expectedNext = validTransitions[currentStatus];
+    const allowedNextList = validTransitions[currentStatus];
 
-    if (!expectedNext || expectedNext !== targetStatus) {
+    if (!allowedNextList || !allowedNextList.includes(targetStatus)) {
       res.status(400).json({
         error: 'InvalidTransition',
         message: `Cannot transition order from '${currentStatus}' to '${targetStatus}'. ${
-          expectedNext ? `Valid next status is '${expectedNext}'.` : 'Order is no longer in active kitchen flow.'
+          allowedNextList ? `Valid next status is one of [${allowedNextList.join(', ')}].` : 'Order is no longer in active kitchen flow.'
         }`,
       });
       return;

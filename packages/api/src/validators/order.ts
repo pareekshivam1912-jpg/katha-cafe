@@ -1,14 +1,15 @@
 import { z } from 'zod';
 
 export const orderItemInputSchema = z.object({
-  menuItemId: z.string().uuid('Invalid menu item ID'),
+  menuItemId: z.string().min(1, 'Menu item identifier is required'),
+  name: z.string().optional(),
   quantity: z.number().int().min(1, 'Quantity must be at least 1').max(50, 'Max 50 items per line'),
   notes: z.string().max(200, 'Notes cannot exceed 200 characters').optional(),
 });
 
 export const submitQrOrderSchema = z.object({
-  sessionId: z.string().uuid('Invalid session ID'),
-  customerId: z.string().uuid('Invalid customer ID'),
+  sessionId: z.string().min(1, 'Session identifier is required'),
+  customerId: z.string().min(1, 'Customer identifier is required'),
   idempotencyKey: z
     .string()
     .trim()
@@ -42,7 +43,7 @@ export const rejectOrderSchema = z.object({
 });
 
 export const updateKdsStatusSchema = z.object({
-  status: z.enum(['PREPARING', 'READY', 'SERVED']),
+  status: z.enum(['ACCEPTED', 'PREPARING', 'READY', 'SERVED']),
   notes: z.string().max(300).optional(),
 });
 

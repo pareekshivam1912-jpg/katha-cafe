@@ -245,3 +245,93 @@ reportsRouter.get('/reports/reconciliation', async (_req: Request, res: Response
     });
   }
 });
+
+// GET /reports/orders/live - Live and recent orders across all statuses for Admin panel
+reportsRouter.get('/reports/orders/live', async (_req: Request, res: Response) => {
+  try {
+    const db = await getDb();
+    const ordersRes = await db.query<{
+      id: string;
+      order_number: string;
+      order_type: string;
+      status: string;
+      subtotal_paise: string;
+      total_paise: string;
+      notes: string | null;
+      created_at: string;
+      updated_at: string;
+      table_label: string | null;
+      customer_name: string | null;
+      customer_mobile: string | null;
+    }>(
+      `SELECT 
+        o.id,
+        o.order_number,
+        o.order_type,
+        o.status,
+        o.subtotal_paise,
+        o.total_paise,
+        o.notes,
+        o.created_at,
+        o.updated_at,
+        t.table_label AS table_label,
+        c.full_name AS customer_name,
+        c.mobile_e164 AS customer_mobile
+      FROM orders o
+      LEFT JOIN table_sessions ts ON o.table_session_id = ts.id
+      LEFT JOIN restaurant_tables t ON ts.table_id = t.id
+      LEFT JOIN customers c ON o.customer_id = c.id
+      ORDER BY o.created_at DESC
+      LIMIT 100`
+    );
+
+    const ordersWithItems = [];
+    for (const order of ordersRes.rows) {
+      const itemsRes = await db.query<{
+        item_name_snapshot: string;
+        quantity: number;
+        unit_price_paise: string;
+        line_total_paise: string;
+        notes: string | null;
+      }>(
+        `SELECT item_name_snapshot, quantity, unit_price_paise, line_total_paise, notes
+         FROM order_items
+         WHERE order_id = $1`,
+        [order.id]
+      );
+
+      ordersWithItems.push({
+        id: order.id,
+        orderNumber: order.order_number,
+        orderType: order.order_type,
+        status: order.status,
+        tableLabel: order.table_label || (order.order_type === 'TAKEAWAY' ? 'Takeaway' : 'Counter'),
+        customerName: order.customer_name || 'Guest',
+        customerMobile: order.customer_mobile || null,
+        subtotalInr: Number(order.subtotal_paise) / 100,
+        totalInr: Number(order.total_paise) / 100,
+        notes: order.notes,
+        createdAt: order.created_at,
+        updatedAt: order.updated_at,
+        items: itemsRes.rows.map((i) => ({
+          name: i.item_name_snapshot,
+          quantity: i.quantity,
+          unitPriceInr: Number(i.unit_price_paise) / 100,
+          lineTotalInr: Number(i.line_total_paise) / 100,
+          notes: i.notes,
+        })),
+      });
+    }
+
+    res.status(200).json({
+      count: ordersWithItems.length,
+      orders: ordersWithItems,
+    });
+  } catch (err: any) {
+    console.error('[reportsRouter] Error fetching live orders:', err);
+    res.status(500).json({
+      error: 'InternalServerError',
+      message: 'Failed to fetch live orders',
+    });
+  }
+});

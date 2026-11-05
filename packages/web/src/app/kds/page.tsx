@@ -14,7 +14,7 @@ interface KdsOrder {
   id: string;
   orderNumber: string;
   orderType: string;
-  status: 'ACCEPTED' | 'PREPARING' | 'READY';
+  status: 'SUBMITTED' | 'ACCEPTED' | 'PREPARING' | 'READY';
   tableLabel: string;
   notes: string | null;
   createdAt: string;
@@ -30,7 +30,7 @@ export default function KdsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACCEPTED' | 'PREPARING' | 'READY'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'SUBMITTED' | 'ACCEPTED' | 'PREPARING' | 'READY'>('ALL');
 
   // 1. Initial Authentication: check localStorage first, or fallback to Kitchen credentials
   useEffect(() => {
@@ -113,7 +113,8 @@ export default function KdsPage() {
   // 3. Progress Status
   const handleAdvanceStatus = async (orderId: string, currentStatus: string) => {
     let nextStatus: string;
-    if (currentStatus === 'ACCEPTED') nextStatus = 'PREPARING';
+    if (currentStatus === 'SUBMITTED') nextStatus = 'PREPARING';
+    else if (currentStatus === 'ACCEPTED') nextStatus = 'PREPARING';
     else if (currentStatus === 'PREPARING') nextStatus = 'READY';
     else if (currentStatus === 'READY') nextStatus = 'SERVED';
     else return;
@@ -156,7 +157,7 @@ export default function KdsPage() {
 
         {/* Center Filter Buttons */}
         <div className="flex gap-2">
-          {(['ALL', 'ACCEPTED', 'PREPARING', 'READY'] as const).map((s) => (
+          {(['ALL', 'SUBMITTED', 'ACCEPTED', 'PREPARING', 'READY'] as const).map((s) => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
@@ -239,6 +240,8 @@ export default function KdsPage() {
                       ? 'border-emerald-500/50'
                       : order.status === 'PREPARING'
                       ? 'border-sky-500/50'
+                      : order.status === 'SUBMITTED'
+                      ? 'border-yellow-400/80 shadow-yellow-500/10'
                       : 'border-amber-500/50'
                   }`}
                 >
@@ -249,6 +252,8 @@ export default function KdsPage() {
                         ? 'bg-emerald-950/40 border-emerald-900/50'
                         : order.status === 'PREPARING'
                         ? 'bg-sky-950/40 border-sky-900/50'
+                        : order.status === 'SUBMITTED'
+                        ? 'bg-yellow-950/50 border-yellow-800/60'
                         : 'bg-amber-950/40 border-amber-900/50'
                     }`}
                   >
@@ -271,10 +276,12 @@ export default function KdsPage() {
                             ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
                             : order.status === 'PREPARING'
                             ? 'bg-sky-500/20 text-sky-400 border border-sky-500/40'
+                            : order.status === 'SUBMITTED'
+                            ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-400/50'
                             : 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
                         }`}
                       >
-                        {order.status}
+                        {order.status === 'SUBMITTED' ? 'NEW QR' : order.status}
                       </span>
                       <p
                         className={`text-xs mt-1 font-mono font-semibold ${
@@ -317,6 +324,15 @@ export default function KdsPage() {
 
                   {/* Action Button */}
                   <div className="p-3 border-t border-slate-800 bg-slate-900/60">
+                    {order.status === 'SUBMITTED' && (
+                      <button
+                        onClick={() => handleAdvanceStatus(order.id, 'SUBMITTED')}
+                        className="w-full bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-black py-2.5 rounded-lg text-sm transition shadow flex items-center justify-center gap-1.5 animate-pulse"
+                      >
+                        <span>🔔</span> Accept &amp; Start Prep →
+                      </button>
+                    )}
+
                     {order.status === 'ACCEPTED' && (
                       <button
                         onClick={() => handleAdvanceStatus(order.id, 'ACCEPTED')}

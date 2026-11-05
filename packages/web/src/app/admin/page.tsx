@@ -35,11 +35,38 @@ interface ReconciliationData {
   unsettledExposureInr: number;
 }
 
+interface AdminLiveOrder {
+  id: string;
+  orderNumber: string;
+  orderType: string;
+  status: string;
+  tableLabel: string;
+  customerName: string;
+  customerMobile: string | null;
+  totalInr: number;
+  subtotalInr: number;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  items: Array<{
+    name: string;
+    quantity: number;
+    unitPriceInr: number;
+    lineTotalInr: number;
+    notes: string | null;
+  }>;
+}
+
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'inventory' | 'reports'>('inventory');
+  const [activeTab, setActiveTab] = useState<'orders' | 'inventory' | 'reports'>('orders');
   const [staffToken, setStaffToken] = useState<string>('');
   const [staffUser, setStaffUser] = useState<any>(null);
   const [authError, setAuthError] = useState<string | null>(null);
+
+  // Live Orders State
+  const [liveOrders, setLiveOrders] = useState<AdminLiveOrder[]>([]);
+  const [orderFilter, setOrderFilter] = useState<string>('ALL');
+  const [loadingOrders, setLoadingOrders] = useState(false);
 
   // Inventory State
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
@@ -173,13 +200,38 @@ export default function AdminPage() {
     }
   };
 
+  // Fetch Live Orders across all tables and statuses
+  const fetchLiveOrders = async () => {
+    if (!staffToken) return;
+    setLoadingOrders(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/reports/orders/live`, {
+        headers: { Authorization: `Bearer ${staffToken}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setLiveOrders(data.orders || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch live orders for admin:', err);
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
+
   useEffect(() => {
     if (staffToken) {
+      // Always poll live orders every 5 seconds so Admin sees all changes immediately
+      fetchLiveOrders();
+      const interval = setInterval(fetchLiveOrders, 5000);
+
       if (activeTab === 'inventory') {
         fetchInventory();
-      } else {
+      } else if (activeTab === 'reports') {
         fetchReports();
       }
+
+      return () => clearInterval(interval);
     }
   }, [activeTab, staffToken]);
 
@@ -320,6 +372,22 @@ export default function AdminPage() {
       {/* Tabs */}
       <div className="bg-[#063B27]/10 px-6 py-3 border-b border-[#063B27]/15 flex gap-4">
         <button
+          onClick={() => setActiveTab('orders')}
+          className={`px-4 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 ${
+            activeTab === 'orders'
+              ? 'bg-[#063B27] text-white shadow'
+              : 'bg-white text-[#063B27] hover:bg-[#063B27]/5'
+          }`}
+        >
+          <span>📋 Live Orders &amp; KOTs</span>
+          {liveOrders.filter((o) => o.status !== 'CLOSED' && o.status !== 'CANCELLED' && o.status !== 'REJECTED').length > 0 && (
+            <span className="bg-[#C6922E] text-[#063B27] font-bold text-xs px-2 py-0.5 rounded-full shadow animate-pulse">
+              {liveOrders.filter((o) => o.status !== 'CLOSED' && o.status !== 'CANCELLED' && o.status !== 'REJECTED').length} Active
+            </span>
+          )}
+        </button>
+
+        <button
           onClick={() => setActiveTab('inventory')}
           className={`px-4 py-2 rounded-lg font-medium text-sm transition flex items-center gap-2 ${
             activeTab === 'inventory'
@@ -327,7 +395,7 @@ export default function AdminPage() {
               : 'bg-white text-[#063B27] hover:bg-[#063B27]/5'
           }`}
         >
-          <span>📦 Inventory & Stock Alerts</span>
+          <span>📦 Inventory &amp; Stock Alerts</span>
           {lowStockCount > 0 && (
             <span className="bg-red-500 text-white font-bold text-xs px-2 py-0.5 rounded-full">
               {lowStockCount}
@@ -343,7 +411,7 @@ export default function AdminPage() {
               : 'bg-white text-[#063B27] hover:bg-[#063B27]/5'
           }`}
         >
-          📊 Sales Reports & Reconciliation
+          📊 Sales Reports &amp; Reconciliation
         </button>
       </div>
 
@@ -512,8 +580,215 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* Tab 0: Live Orders & KOTs */}
+        {activeTab === 'orders' && (
+          <div className="space-y-6">
+            {/* Top Metric Bar */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                <p className="text-xs text-gray-500 font-semibold uppercase">Total Recorded Orders</p>
+                <p className="font-serif text-2xl font-bold text-[#063B27] mt-1">{liveOrders.length}</p>
+              </div>
+              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                <p className="text-xs text-gray-500 font-semibold uppercase">Awaiting Cashier Acceptance</p>
+                <p className="font-serif text-2xl font-bold text-yellow-600 mt-1">
+                  {liveOrders.filter((o) => o.status === 'SUBMITTED').length}
+                </p>
+              </div>
+              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                <p className="text-xs text-gray-500 font-semibold uppercase">In Kitchen / Preparing</p>
+                <p className="font-serif text-2xl font-bold text-sky-600 mt-1">
+                  {liveOrders.filter((o) => o.status === 'ACCEPTED' || o.status === 'PREPARING').length}
+                </p>
+              </div>
+              <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+                <p className="text-xs text-gray-500 font-semibold uppercase">Ready / Served</p>
+                <p className="font-serif text-2xl font-bold text-emerald-600 mt-1">
+                  {liveOrders.filter((o) => o.status === 'READY' || o.status === 'SERVED').length}
+                </p>
+              </div>
+            </div>
+
+            {/* Orders Header & Filter Controls */}
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold text-gray-700 uppercase mr-1">Status Filter:</span>
+                {(['ALL', 'SUBMITTED', 'ACCEPTED', 'PREPARING', 'READY', 'SERVED', 'CLOSED'] as const).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setOrderFilter(s)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                      orderFilter === s
+                        ? 'bg-[#063B27] text-[#C6922E] shadow'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {s === 'ALL'
+                      ? `All (${liveOrders.length})`
+                      : `${s} (${liveOrders.filter((o) => o.status === s).length})`}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={fetchLiveOrders}
+                  disabled={loadingOrders}
+                  className="bg-[#063B27]/10 hover:bg-[#063B27]/20 text-[#063B27] font-semibold text-xs px-3 py-1.5 rounded-lg transition border border-[#063B27]/20 flex items-center gap-1"
+                >
+                  <span>↻</span> {loadingOrders ? 'Refreshing...' : 'Refresh Orders'}
+                </button>
+              </div>
+            </div>
+
+            {/* Orders List / Cards */}
+            {liveOrders.length === 0 ? (
+              <div className="bg-white rounded-2xl border-2 border-dashed border-gray-300 p-12 text-center text-gray-500">
+                <span className="text-3xl block mb-2">🍽️</span>
+                <p className="font-serif text-lg font-bold text-gray-700">No Orders in the System Yet</p>
+                <p className="text-xs mt-1 text-gray-500 max-w-sm mx-auto">
+                  When customers scan table QR codes or cashier enters orders at the POS terminal, tickets will appear here in real time.
+                </p>
+                <div className="mt-4 flex justify-center gap-3">
+                  <Link
+                    href="/order"
+                    className="bg-[#063B27] hover:bg-[#084d33] text-[#C6922E] text-xs font-bold px-4 py-2 rounded-lg shadow-sm"
+                  >
+                    Place a QR Table Order →
+                  </Link>
+                  <Link
+                    href="/pos"
+                    className="bg-[#C6922E] hover:bg-[#b58326] text-[#063B27] text-xs font-bold px-4 py-2 rounded-lg shadow-sm"
+                  >
+                    Open Cashier POS →
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {liveOrders
+                  .filter((o) => orderFilter === 'ALL' || o.status === orderFilter)
+                  .map((order) => {
+                    const statusBadgeClass =
+                      order.status === 'SUBMITTED'
+                        ? 'bg-yellow-100 text-yellow-800 border-yellow-300'
+                        : order.status === 'ACCEPTED'
+                        ? 'bg-blue-100 text-blue-800 border-blue-300'
+                        : order.status === 'PREPARING'
+                        ? 'bg-amber-100 text-amber-800 border-amber-300'
+                        : order.status === 'READY'
+                        ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                        : order.status === 'SERVED'
+                        ? 'bg-indigo-100 text-indigo-800 border-indigo-300'
+                        : order.status === 'CLOSED'
+                        ? 'bg-gray-100 text-gray-700 border-gray-300'
+                        : 'bg-red-100 text-red-800 border-red-300';
+
+                    return (
+                      <div
+                        key={order.id}
+                        className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 hover:border-[#063B27]/40 transition flex flex-col justify-between"
+                      >
+                        <div>
+                          {/* Top Row: Order #, Table, Status */}
+                          <div className="flex items-start justify-between border-b border-gray-100 pb-3 mb-3">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-sm text-[#063B27] font-mono">
+                                  {order.orderNumber}
+                                </span>
+                                <span className="bg-[#063B27]/10 text-[#063B27] font-semibold text-xs px-2 py-0.5 rounded">
+                                  {order.tableLabel}
+                                </span>
+                                <span className="text-[10px] text-gray-500 uppercase tracking-wide">
+                                  {order.orderType}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-600 mt-1">
+                                Customer: <strong className="text-gray-900">{order.customerName}</strong>
+                                {order.customerMobile && (
+                                  <span className="text-gray-500 font-mono text-[11px] ml-1.5">
+                                    ({order.customerMobile})
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+
+                            <div className="text-right">
+                              <span
+                                className={`text-xs font-bold px-2.5 py-0.5 rounded-full border uppercase tracking-wider ${statusBadgeClass}`}
+                              >
+                                {order.status === 'SUBMITTED' ? 'Incoming QR' : order.status}
+                              </span>
+                              <p className="text-[10px] text-gray-400 mt-1 font-mono">
+                                {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Line items list */}
+                          <div className="space-y-1.5 my-2">
+                            {order.items.map((item, idx) => (
+                              <div key={idx} className="flex justify-between items-center text-xs">
+                                <span className="text-gray-800">
+                                  <span className="font-bold text-[#063B27] mr-1.5">{item.quantity}x</span>
+                                  {item.name}
+                                  {item.notes && (
+                                    <span className="text-[11px] text-gray-400 italic ml-1">
+                                      ({item.notes})
+                                    </span>
+                                  )}
+                                </span>
+                                <span className="font-mono text-gray-600 font-medium">
+                                  ₹{item.lineTotalInr}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+
+                          {order.notes && (
+                            <div className="p-2 bg-amber-50/70 border border-amber-200/60 rounded text-[11px] text-amber-900 mt-2">
+                              Note: {order.notes}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Card Bottom: Total Amount & Links */}
+                        <div className="border-t border-gray-100 pt-3 mt-3 flex items-center justify-between">
+                          <div>
+                            <span className="text-xs text-gray-500">Order Total: </span>
+                            <span className="font-serif font-bold text-base text-[#063B27]">
+                              ₹{order.totalInr}
+                            </span>
+                          </div>
+
+                          <div className="flex gap-2">
+                            <Link
+                              href="/kds"
+                              className="bg-gray-100 hover:bg-gray-200 text-gray-800 text-[11px] font-semibold px-2.5 py-1 rounded transition"
+                            >
+                              Kitchen View →
+                            </Link>
+                            {order.status !== 'CLOSED' && (
+                              <Link
+                                href="/pos"
+                                className="bg-[#C6922E] hover:bg-[#b58326] text-[#063B27] text-[11px] font-bold px-2.5 py-1 rounded transition"
+                              >
+                                Manage / Settle at POS →
+                              </Link>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Tab 1: Inventory Management */}
-        {activeTab === 'inventory' ? (
+        {activeTab === 'inventory' && (
           <div className="space-y-6">
             {/* Metric Banner */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -609,8 +884,10 @@ export default function AdminPage() {
               )}
             </div>
           </div>
-        ) : (
-          /* Tab 2: Sales Reports & Reconciliation */
+        )}
+
+        {/* Tab 2: Sales Reports & Reconciliation */}
+        {activeTab === 'reports' && (
           <div className="space-y-6">
             {/* Top Aggregate Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">

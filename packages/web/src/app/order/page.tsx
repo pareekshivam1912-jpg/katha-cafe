@@ -65,21 +65,41 @@ function OrderContent() {
   const [placedOrder, setPlacedOrder] = useState<PlacedOrder | null>(null);
 
   // Handle direct 1-click table selection
-  const handleDirectTableSelect = (label: string, tkn: string) => {
+  const handleDirectTableSelect = async (label: string, tkn: string) => {
     setError(null);
-    setTableInfo({
-      tableLabel: label,
-      sessionId: `demo-session-${label.toLowerCase().replace(/\s+/g, '-')}`,
-    });
-    if (typeof window !== 'undefined') {
-      window.history.pushState({}, '', `/order?token=${tkn}`);
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/tables/resolve/${tkn}`);
+      if (res.ok) {
+        const data = await res.json();
+        setTableInfo({
+          tableLabel: data.tableLabel,
+          sessionId: data.sessionId,
+        });
+      } else {
+        setTableInfo({
+          tableLabel: label,
+          sessionId: `demo-session-${label.toLowerCase().replace(/\s+/g, '-')}`,
+        });
+      }
+    } catch {
+      setTableInfo({
+        tableLabel: label,
+        sessionId: `demo-session-${label.toLowerCase().replace(/\s+/g, '-')}`,
+      });
+    } finally {
+      setLoading(false);
+      if (typeof window !== 'undefined') {
+        window.history.pushState({}, '', `/order?token=${tkn}`);
+      }
     }
   };
 
   // 1. Resolve Table from Opaque Token
   useEffect(() => {
     if (!token) {
-      setLoading(false);
+      // Auto-resolve Table 1 by default so customer can order immediately
+      handleDirectTableSelect('Table 1', 'katha-table-1-token-secret-2026');
       return;
     }
 
@@ -131,10 +151,8 @@ function OrderContent() {
     resolveTable(currentToken);
   }, [token]);
 
-  // 2. Fetch Menu Items once table is resolved
+  // 2. Fetch Menu Items immediately on page load
   useEffect(() => {
-    if (!tableInfo) return;
-
     async function fetchMenu() {
       setLoadingMenu(true);
       // Pre-load all 119 canonical menu items immediately
@@ -192,7 +210,7 @@ function OrderContent() {
     }
 
     fetchMenu();
-  }, [tableInfo]);
+  }, []);
 
   // 3. Poll Live Order Status when order is placed
   useEffect(() => {
@@ -245,29 +263,16 @@ function OrderContent() {
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        if (tableInfo.sessionId.startsWith('demo-session')) {
-          setCustomer({
-            id: `demo-cust-${Date.now()}`,
-            fullName: fullName.trim(),
-            mobileE164: cleanMobile.startsWith('+91') ? cleanMobile : `+91${cleanMobile}`,
-          });
-          return;
-        }
         setFormError(data.message || 'Failed to verify details. Please try again.');
         return;
       }
 
+      if (data.sessionId) {
+        setTableInfo((prev) => (prev ? { ...prev, sessionId: data.sessionId } : prev));
+      }
       setCustomer(data.customer);
     } catch (err) {
-      if (tableInfo.sessionId.startsWith('demo-session')) {
-        setCustomer({
-          id: `demo-cust-${Date.now()}`,
-          fullName: fullName.trim(),
-          mobileE164: cleanMobile.startsWith('+91') ? cleanMobile : `+91${cleanMobile}`,
-        });
-      } else {
-        setFormError('Network connection failed. Please try again.');
-      }
+      setFormError('Network connection failed. Please try again.');
     } finally {
       setSubmittingCustomer(false);
     }
@@ -311,12 +316,59 @@ function OrderContent() {
 
   // Submit QR Order
   const handlePlaceOrder = async () => {
-    if (!tableInfo || !customer || cart.length === 0) return;
+    if (!tableInfo || cart.length === 0) return;
 
     setSubmittingOrder(true);
     setOrderError(null);
 
-    const idempotencyKey = `qr-order-${customer.id}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    let activeCustomer = customer;
+    if (!activeCustomer) {
+      const cleanMobile = mobile.replace(/[\s\-()]/g, '');
+      const validMobile = /^(?:\+91|91|0)?[6-9]\d{9}$/.test(cleanMobile);
+      const custName = fullName.trim() || 'Guest Diner';
+      const custMobile = validMobile
+        ? cleanMobile.startsWith('+91')
+          ? cleanMobile
+          : `+91${cleanMobile}`
+        : '+919876543210';
+
+      try {
+        const idRes = await fetch(`${API_BASE_URL}/api/table-sessions/identify-customer`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: tableInfo.sessionId,
+            fullName: custName,
+            mobile: custMobile,
+          }),
+        });
+        const idData = await idRes.json().catch(() => ({}));
+        if (idRes.ok && idData.customer) {
+          activeCustomer = idData.customer;
+          setCustomer(activeCustomer);
+          if (idData.sessionId) {
+            setTableInfo((prev) => (prev ? { ...prev, sessionId: idData.sessionId } : prev));
+          }
+        } else {
+          activeCustomer = {
+            id: `guest-cust-${Date.now()}`,
+            fullName: custName,
+            mobileE164: custMobile,
+          };
+          setCustomer(activeCustomer);
+        }
+      } catch {
+        activeCustomer = {
+          id: `guest-cust-${Date.now()}`,
+          fullName: custName,
+          mobileE164: custMobile,
+        };
+        setCustomer(activeCustomer);
+      }
+    }
+
+    const customerIdToSend = activeCustomer ? activeCustomer.id : `guest-cust-${Date.now()}`;
+    const idempotencyKey = `qr-order-${customerIdToSend}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/orders`, {
@@ -324,10 +376,11 @@ function OrderContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionId: tableInfo.sessionId,
-          customerId: customer.id,
+          customerId: customerIdToSend,
           idempotencyKey,
           items: cart.map((c) => ({
             menuItemId: c.menuItemId,
+            name: c.name,
             quantity: c.quantity,
             notes: c.notes || undefined,
           })),
@@ -337,20 +390,6 @@ function OrderContent() {
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        if (tableInfo.sessionId.startsWith('demo-session')) {
-          const fakeNum = Math.floor(1000 + Math.random() * 9000).toString();
-          setPlacedOrder({
-            orderId: `demo-order-${Date.now()}`,
-            orderNumber: `KTH-${fakeNum}`,
-            status: 'ACCEPTED',
-            totalInr: cartTotal,
-            publicStatusToken: `demo-token-${Date.now()}`,
-            items: cart.map((c) => ({ name: c.name, quantity: c.quantity, unitPriceInr: c.unitPriceInr })),
-          });
-          setCart([]);
-          setShowCartModal(false);
-          return;
-        }
         setOrderError(data.message || 'Failed to place order. Please review your cart.');
         return;
       }
@@ -366,21 +405,7 @@ function OrderContent() {
       setCart([]);
       setShowCartModal(false);
     } catch (err) {
-      if (tableInfo.sessionId.startsWith('demo-session')) {
-        const fakeNum = Math.floor(1000 + Math.random() * 9000).toString();
-        setPlacedOrder({
-          orderId: `demo-order-${Date.now()}`,
-          orderNumber: `KTH-${fakeNum}`,
-          status: 'ACCEPTED',
-          totalInr: cartTotal,
-          publicStatusToken: `demo-token-${Date.now()}`,
-          items: cart.map((c) => ({ name: c.name, quantity: c.quantity, unitPriceInr: c.unitPriceInr })),
-        });
-        setCart([]);
-        setShowCartModal(false);
-      } else {
-        setOrderError('Network error while placing order. Please try again.');
-      }
+      setOrderError('Network error while placing order. Please try again.');
     } finally {
       setSubmittingOrder(false);
     }
@@ -511,76 +536,52 @@ function OrderContent() {
           </div>
         )}
 
-        {/* Step 1: Customer Identification Form */}
-        {!loading && !error && tableInfo && !customer && (
-          <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-md my-4">
-            <div className="text-center mb-6">
-              <span className="text-2xl block mb-1">👋</span>
-              <h2 className="font-serif font-bold text-xl text-[#063B27]">Welcome to Katha Café!</h2>
-              <p className="text-xs text-gray-600 mt-1">
-                You are seated at <strong className="text-[#063B27]">{tableInfo.tableLabel}</strong>. Please enter your name and phone number to start ordering.
-              </p>
-            </div>
-
-            {formError && (
-              <div className="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs">
-                {formError}
-              </div>
-            )}
-
-            <form onSubmit={handleIdentifyCustomer} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">Your Full Name</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Aarav Sharma"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#063B27]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 mb-1">10-Digit Mobile Number</label>
-                <div className="flex rounded-lg border border-gray-300 overflow-hidden focus-within:ring-2 focus-within:ring-[#063B27]">
-                  <span className="bg-gray-100 px-3 py-2.5 text-xs text-gray-600 font-medium border-r border-gray-300 flex items-center">
-                    +91
-                  </span>
-                  <input
-                    type="tel"
-                    required
-                    placeholder="9876543210"
-                    maxLength={10}
-                    value={mobile}
-                    onChange={(e) => setMobile(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-sm focus:outline-none"
-                  />
-                </div>
-                <p className="text-[10px] text-gray-400 mt-1">No password or app download required.</p>
-              </div>
-
-              <button
-                type="submit"
-                disabled={submittingCustomer}
-                className="w-full mt-2 py-3 rounded-lg bg-[#063B27] hover:bg-[#084d33] text-[#C6922E] font-bold text-sm transition shadow-sm disabled:opacity-50"
-              >
-                {submittingCustomer ? 'Connecting...' : 'View Menu & Order →'}
-              </button>
-            </form>
-          </div>
-        )}
-
-        {/* Step 2: Live Menu & Cart Ordering (Once customer is identified and hasn't placed order) */}
-        {!loading && !error && tableInfo && customer && !placedOrder && (
+        {/* Step 2: Live Menu & Cart Ordering (Immediately visible) */}
+        {!placedOrder && (
           <div className="space-y-4">
-            {/* Customer Header Pill */}
-            <div className="bg-white p-3 rounded-xl border border-gray-200 flex items-center justify-between text-xs shadow-sm">
-              <div>
-                <span className="text-gray-500">Ordering for: </span>
-                <strong className="text-gray-900">{customer.fullName}</strong>
+            {/* Table & Diner Status Bar */}
+            <div className="bg-white p-3 rounded-xl border border-gray-200 flex flex-wrap items-center justify-between text-xs shadow-sm gap-2">
+              <div className="flex items-center gap-2">
+                <span className="bg-[#063B27] text-[#C6922E] font-bold px-2.5 py-1 rounded text-xs flex items-center gap-1 shadow-sm">
+                  <span>🪑</span> {tableInfo?.tableLabel || 'Table 1'}
+                </span>
+                {customer ? (
+                  <span className="text-gray-700">
+                    Ordering for: <strong className="text-gray-900">{customer.fullName}</strong>
+                    <span className="text-gray-500 font-mono text-[11px] ml-1">({customer.mobileE164})</span>
+                  </span>
+                ) : (
+                  <span className="text-gray-500 italic text-[11px]">
+                    Guest Diner • Seated at {tableInfo?.tableLabel || 'Table 1'}
+                  </span>
+                )}
               </div>
-              <span className="text-gray-500 font-mono text-[11px]">{customer.mobileE164}</span>
+
+              {/* Table Switcher */}
+              <div className="flex items-center gap-1.5 text-[11px]">
+                <span className="text-gray-500 font-medium">Table:</span>
+                {(['Table 1', 'Table 2', 'Table 3'] as const).map((tLabel, idx) => {
+                  const tTokens = [
+                    'katha-table-1-token-secret-2026',
+                    'katha-table-2-token-secret-2026',
+                    'katha-table-3-token-secret-2026',
+                  ];
+                  return (
+                    <button
+                      key={tLabel}
+                      type="button"
+                      onClick={() => handleDirectTableSelect(tLabel, tTokens[idx])}
+                      className={`px-2 py-0.5 rounded border transition font-semibold ${
+                        (tableInfo?.tableLabel || 'Table 1') === tLabel
+                          ? 'bg-[#063B27] text-white border-[#063B27]'
+                          : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                      }`}
+                    >
+                      {tLabel}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Search Bar */}
@@ -846,6 +847,35 @@ function OrderContent() {
                   className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#063B27]"
                 />
               </div>
+
+              {/* Diner Details if not entered yet */}
+              {!customer && (
+                <div className="py-2.5 px-3 bg-amber-50/80 border border-amber-200/80 rounded-xl space-y-2 mt-2">
+                  <span className="text-[11px] font-bold text-[#063B27] block">
+                    👤 Your Details (for Server &amp; Kitchen):
+                  </span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      placeholder="Your Full Name"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="w-full px-2.5 py-1.5 border rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#063B27]"
+                    />
+                    <input
+                      type="tel"
+                      maxLength={10}
+                      placeholder="10-digit Mobile"
+                      value={mobile}
+                      onChange={(e) => setMobile(e.target.value)}
+                      className="w-full px-2.5 py-1.5 border rounded-lg text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#063B27]"
+                    />
+                  </div>
+                  <p className="text-[10px] text-gray-500">
+                    Enter your name and number so your order ticket is matched to your table.
+                  </p>
+                </div>
+              )}
 
               {/* Cart Footer */}
               <div className="pt-3 border-t border-gray-100 space-y-3">
