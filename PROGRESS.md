@@ -4,9 +4,9 @@ Last updated: 2026-11-05
 
 | Phase | Name | Status | Notes |
 |---:|---|---|---|
-| 0 | Documentation baseline | done | Markdown specification pack created; application code not started |
-| 1 | Repository/local foundation | todo | Await user approval and repository inspection |
-| 2 | Database/authentication | todo | Blocked by Phase 1 |
+| 0 | Documentation baseline | done | Markdown specification pack created; initial baseline committed |
+| 1 | Repository/local foundation | done | Monorepo initialized, pinned dependencies installed, health check API running, tests passing |
+| 2 | Database/authentication | todo | Blocked by Phase 1 approval |
 | 3 | Menu/public website | todo | Menu discrepancies need owner confirmation |
 | 4 | Tables/QR/customer details | todo | Blocked by prior phases |
 | 5 | QR ordering | todo | Blocked by prior phases |
@@ -17,7 +17,5 @@ Last updated: 2026-11-05
 
 ## Verification evidence
 
-- Documentation files generated and packaged locally.
-- Menu source screenshots inspected.
-- No application runtime or implementation phase has been executed.
-- No Git repository was available in the current task context; no commit was created.
+- Phase 0: Documentation files generated, packaged, and committed in initial baseline commit (`docs(phase-0)`).
+- Phase 1: Git repository initialized in `D:\CAFE\KathaCafeDocs`. Monorepo created with npm workspaces. Pinned dependencies installed from lockfile. TypeScript built to `packages/api/dist`. Vitest unit and HTTP integration tests executed and passing (2/2 passing). GET `/api/health` verified with 200 OK response returning status, uptime, environment, and ISO timestamp.

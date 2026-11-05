@@ -12,7 +12,7 @@ Update this file as work proceeds. Do not mark an item complete without evidence
 | DOC-04 | 0 | Propose database schema | Done | `Schema.md` |
 | DOC-05 | 0 | Transcribe menu and prices | Done with discrepancies | `menu.md` |
 | DOC-06 | 0 | Define phases and rules | Done | `Phase.md`, `rules.md` |
-| DEV-01 | 1 | Inspect/create repository foundation | Todo | Await Phase 1 approval |
+| DEV-01 | 1 | Inspect/create repository foundation | Done | Git repo, npm workspaces, health endpoint, tests passing |
 | DEV-02 | 2 | Implement schema/auth | Todo | Blocked by Phase 1 |
 | DEV-03 | 3 | Menu/public website | Todo | Confirm prices first |
 | DEV-04 | 4 | Table QR/customer details | Todo | — |

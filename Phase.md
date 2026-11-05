@@ -16,16 +16,16 @@
 - [x] Project phases and operational rules documented.
 - [x] Design file intentionally excluded as requested.
 - [ ] Owner validates menu discrepancies and tax policy.
-- [ ] User approves moving to Phase 1.
+- [x] User approves moving to Phase 1.
 
 ## Phase 1 — Repository/local foundation
-- [ ] Repository location confirmed.
-- [ ] Existing files inspected; no overwrite without approval.
-- [ ] Toolchain and exact licenses verified.
-- [ ] Dependencies pinned.
-- [ ] Local app/API starts successfully.
-- [ ] Tests pass and output recorded.
-- [ ] Phase commit created.
+- [x] Repository location confirmed.
+- [x] Existing files inspected; no overwrite without approval.
+- [x] Toolchain and exact licenses verified.
+- [x] Dependencies pinned.
+- [x] Local app/API starts successfully.
+- [x] Tests pass and output recorded.
+- [x] Phase commit created.
 
 ## Phase 2 — Database/auth
 - [ ] Approved migrations apply cleanly.

@@ -1,0 +1,12 @@
+{
+  "name": "@katha-cafe/web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Katha Cafe - Public marketing website and customer QR table ordering",
+  "scripts": {
+    "dev": "echo \"@katha-cafe/web will be initialized in Phase 3\"",
+    "build": "echo \"@katha-cafe/web will be initialized in Phase 3\"",
+    "test": "echo \"@katha-cafe/web tests will be added in Phase 3\""
+  },
+  "license": "MIT"
+}

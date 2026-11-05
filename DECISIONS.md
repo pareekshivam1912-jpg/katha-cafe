@@ -46,3 +46,17 @@ Record every material technical/product decision here.
 - **Decision:** Do not create or modify `Design.md`.
 - **Reason:** Explicit user instruction for this documentation update.
 - **Status:** Accepted.
+
+## D-009 — Monorepo workspace and Phase 1 toolchain
+- **Decision:** Use npm workspaces (`packages/*`) with dedicated packages for `@katha-cafe/api` (Express backend), `@katha-cafe/web` (Next.js frontend placeholder), and `@katha-cafe/db` (PostgreSQL migrations placeholder).
+- **Toolchain & Pinned Dependencies:**
+  - `express`: 4.21.2 (License: MIT) — minimal HTTP server framework.
+  - `cors`: 2.8.5 (License: MIT) — cross-origin resource sharing middleware.
+  - `dotenv`: 16.4.7 (License: MIT) — environment variable loading.
+  - `zod`: 3.24.2 (License: MIT) — schema validation for config/requests.
+  - `typescript`: 5.8.2 (License: Apache-2.0) — static typing.
+  - `vitest`: 3.0.7 (License: MIT) — unit/integration test runner.
+  - `supertest`: 7.0.0 (License: MIT) — HTTP assertion library.
+  - `tsx`: 4.19.3 (License: MIT) — TypeScript execution without precompilation.
+- **Reason:** User confirmed monorepo structure; all tools are free, open source, and locally executable with no cloud accounts or billing.
+- **Status:** Accepted and verified in Phase 1.

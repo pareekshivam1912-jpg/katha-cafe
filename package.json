@@ -1,0 +1,19 @@
+{
+  "name": "katha-cafe",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Katha Cafe - Restaurant operations, QR table ordering, POS and KDS platform",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm --workspace=@katha-cafe/api run dev",
+    "build": "npm --workspace=@katha-cafe/api run build",
+    "test": "npm --workspace=@katha-cafe/api run test",
+    "start": "npm --workspace=@katha-cafe/api run start"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "license": "MIT"
+}
