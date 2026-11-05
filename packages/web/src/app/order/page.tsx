@@ -66,7 +66,6 @@ function OrderContent() {
   // 1. Resolve Table from Opaque Token
   useEffect(() => {
     if (!token) {
-      setError('No table QR token detected. Please scan the QR code placed on your table.');
       setLoading(false);
       return;
     }
@@ -327,20 +326,84 @@ function OrderContent() {
           </div>
         )}
 
-        {/* Error State (Invalid/Missing QR) */}
-        {!loading && error && (
-          <div className="bg-white rounded-2xl p-8 border border-red-200 text-center shadow-sm my-8">
-            <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-3 text-xl font-bold">
-              ✕
+        {/* Missing or Invalid QR State - Provide Table Selection & Explanation */}
+        {!loading && (!tableInfo || error) && (
+          <div className="bg-white rounded-2xl p-6 sm:p-8 border border-gray-200 shadow-md my-4 space-y-6">
+            <div className="text-center">
+              <span className="text-4xl block mb-2">📱</span>
+              <h2 className="text-xl font-serif font-bold text-[#063B27] mb-1">
+                {error ? 'Table Session Notice' : 'Order at Your Table'}
+              </h2>
+              <p className="text-xs text-gray-600 max-w-sm mx-auto">
+                {error
+                  ? error
+                  : 'At Katha Café, each table features a unique QR code stand. Customers scan it with their phone camera to order directly from their table.'}
+              </p>
             </div>
-            <h2 className="text-lg font-serif font-bold text-red-800 mb-2">QR Code Unavailable</h2>
-            <p className="text-xs text-gray-600 mb-6">{error}</p>
-            <a
-              href="/"
-              className="inline-block px-5 py-2.5 rounded-lg bg-[#063B27] text-white text-xs font-semibold hover:bg-[#084d33] transition"
-            >
-              Return to Homepage
-            </a>
+
+            {/* Quick Demo Table Selection */}
+            <div className="bg-amber-50/60 rounded-xl p-4 border border-amber-200/80 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[#063B27] uppercase tracking-wider">
+                  Select a Table to Start Ordering:
+                </span>
+                <span className="text-[10px] bg-amber-200 text-amber-900 font-bold px-2 py-0.5 rounded">
+                  Live Test
+                </span>
+              </div>
+              <p className="text-[11px] text-gray-600">
+                Click any table below to simulate scanning its QR code and unlock live ordering with cart, quantities, and kitchen dispatch:
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+                {[
+                  { label: 'Table 1', token: 'katha-table-1-token-secret-2026', area: 'Indoor Hall' },
+                  { label: 'Table 2', token: 'katha-table-2-token-secret-2026', area: 'Window Corner' },
+                  { label: 'Table 3', token: 'katha-table-3-token-secret-2026', area: 'Courtyard' },
+                ].map((t) => (
+                  <a
+                    key={t.token}
+                    href={`/order?token=${t.token}`}
+                    className="p-3 bg-white rounded-xl border border-[#063B27]/20 hover:border-[#063B27] hover:shadow-md text-left transition flex flex-col justify-between group"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-sm text-[#063B27] group-hover:text-amber-800">
+                          🪑 {t.label}
+                        </span>
+                        <span className="text-xs text-[#063B27] font-bold group-hover:translate-x-0.5 transition-transform">
+                          →
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-gray-500 mt-0.5">{t.area}</p>
+                    </div>
+                    <span className="mt-2 text-[10px] font-semibold text-[#C6922E] uppercase">
+                      Open Menu & Cart
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* How QR Code Ordering Works Explanation */}
+            <div className="border-t border-gray-100 pt-4 text-xs text-gray-500 space-y-2">
+              <p className="font-semibold text-gray-700">How QR Table Ordering Works:</p>
+              <ol className="list-decimal pl-4 space-y-1 text-[11px] text-gray-600">
+                <li>Point your phone camera or Google Lens at the table QR code.</li>
+                <li>Tap the link banner that appears on your phone screen.</li>
+                <li>Add delicious food to your cart, set quantities, and click &quot;Confirm &amp; Send to Kitchen&quot;.</li>
+                <li>Watch real-time status as chefs prepare and serve your order.</li>
+              </ol>
+            </div>
+
+            <div className="text-center pt-2">
+              <a
+                href="/"
+                className="text-xs text-[#063B27] font-semibold hover:underline"
+              >
+                ← Return to Café Homepage
+              </a>
+            </div>
           </div>
         )}
 

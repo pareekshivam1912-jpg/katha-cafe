@@ -97,10 +97,11 @@ export async function seedMockData(db?: DbClient): Promise<void> {
     );
   }
 
-  // Seed sample tables for table management tests
+  // Seed sample tables for table management and QR ordering tests
   const mockTables = [
-    { label: '[MOCK] Table 1', tokenHash: 'mock_token_hash_table_1' },
-    { label: '[MOCK] Table 2', tokenHash: 'mock_token_hash_table_2' },
+    { label: 'Table 1', tokenHash: '11e4846af84b2aef5b68499c76af006d291e3496ec463d13b563d2ac9301f118' }, // token: katha-table-1-token-secret-2026
+    { label: 'Table 2', tokenHash: 'ca9e28c478623c593f80b155991a74f9252598998be1f1be2ffffd85b2f07e32' }, // token: katha-table-2-token-secret-2026
+    { label: 'Table 3', tokenHash: 'd23ef7d7f0264f3b55decf681df2d7698dacc140234b59656b5499a454f955d4' }, // token: katha-table-3-token-secret-2026
   ];
 
   for (const table of mockTables) {

@@ -65,10 +65,23 @@ export default function AdminPage() {
   const [reconciliation, setReconciliation] = useState<ReconciliationData | null>(null);
   const [loadingReports, setLoadingReports] = useState(false);
 
-  // 1. Initial Auto-Login as mock Admin for demonstration
+  // 1. Initial Authentication: check localStorage first, or fallback to Admin credentials
   useEffect(() => {
     async function loginAdminMock() {
       try {
+        const storedToken = typeof window !== 'undefined' ? localStorage.getItem('katha_staff_token') : null;
+        const storedUser = typeof window !== 'undefined' ? localStorage.getItem('katha_staff_user') : null;
+        if (storedToken && storedUser) {
+          try {
+            const parsed = JSON.parse(storedUser);
+            setStaffToken(storedToken);
+            setStaffUser(parsed);
+            return;
+          } catch (e) {
+            // Ignore parse error
+          }
+        }
+
         const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -81,6 +94,8 @@ export default function AdminPage() {
           const data = await res.json();
           setStaffToken(data.token);
           setStaffUser(data.user);
+          localStorage.setItem('katha_staff_token', data.token);
+          localStorage.setItem('katha_staff_user', JSON.stringify(data.user));
         } else {
           setAuthError('Admin access required. Please log in.');
         }
@@ -91,6 +106,12 @@ export default function AdminPage() {
 
     loginAdminMock();
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('katha_staff_token');
+    localStorage.removeItem('katha_staff_user');
+    window.location.href = '/login';
+  };
 
   // 2. Fetch Inventory Items
   const fetchInventory = async () => {
@@ -280,6 +301,18 @@ export default function AdminPage() {
             >
               Kitchen KDS →
             </Link>
+            <Link
+              href="/login"
+              className="bg-white/10 hover:bg-white/20 text-white px-2.5 py-1.5 rounded transition"
+            >
+              Switch Role
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="bg-red-900/60 hover:bg-red-800 text-red-200 border border-red-700/60 px-2.5 py-1.5 rounded transition"
+            >
+              Logout
+            </button>
           </div>
         </div>
       </header>

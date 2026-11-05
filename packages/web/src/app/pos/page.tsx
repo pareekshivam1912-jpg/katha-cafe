@@ -96,10 +96,23 @@ export default function PosPage() {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentReceipt, setPaymentReceipt] = useState<any | null>(null);
 
-  // 1. Initial Auto-Login as mock Cashier for demonstration
+  // 1. Initial Authentication: check localStorage first, or fallback to Cashier credentials
   useEffect(() => {
     async function loginCashierMock() {
       try {
+        const storedToken = typeof window !== 'undefined' ? localStorage.getItem('katha_staff_token') : null;
+        const storedUser = typeof window !== 'undefined' ? localStorage.getItem('katha_staff_user') : null;
+        if (storedToken && storedUser) {
+          try {
+            const parsed = JSON.parse(storedUser);
+            setStaffToken(storedToken);
+            setStaffUser(parsed);
+            return;
+          } catch (e) {
+            // Ignore parse error
+          }
+        }
+
         const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -112,6 +125,8 @@ export default function PosPage() {
           const data = await res.json();
           setStaffToken(data.token);
           setStaffUser(data.user);
+          localStorage.setItem('katha_staff_token', data.token);
+          localStorage.setItem('katha_staff_user', JSON.stringify(data.user));
         } else {
           setAuthError('Staff authentication required. Please log in.');
         }
@@ -122,6 +137,12 @@ export default function PosPage() {
 
     loginCashierMock();
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('katha_staff_token');
+    localStorage.removeItem('katha_staff_user');
+    window.location.href = '/login';
+  };
 
   // 2. Fetch Menu Items
   useEffect(() => {
@@ -411,8 +432,22 @@ export default function PosPage() {
             href="/kds"
             className="bg-[#C6922E] hover:bg-[#b58326] text-[#063B27] font-semibold text-xs px-3 py-1.5 rounded transition"
           >
-            Go to Kitchen KDS →
+            Kitchen KDS →
           </Link>
+
+          <Link
+            href="/login"
+            className="bg-white/10 hover:bg-white/20 text-white text-xs px-2.5 py-1.5 rounded transition"
+          >
+            Switch Role
+          </Link>
+
+          <button
+            onClick={handleLogout}
+            className="text-xs bg-red-900/60 hover:bg-red-800 text-red-200 border border-red-700/60 px-2.5 py-1.5 rounded transition"
+          >
+            Logout
+          </button>
         </div>
       </header>
 

@@ -32,10 +32,23 @@ export default function KdsPage() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACCEPTED' | 'PREPARING' | 'READY'>('ALL');
 
-  // 1. Authenticate as mock Kitchen staff
+  // 1. Initial Authentication: check localStorage first, or fallback to Kitchen credentials
   useEffect(() => {
     async function loginKitchenMock() {
       try {
+        const storedToken = typeof window !== 'undefined' ? localStorage.getItem('katha_staff_token') : null;
+        const storedUser = typeof window !== 'undefined' ? localStorage.getItem('katha_staff_user') : null;
+        if (storedToken && storedUser) {
+          try {
+            const parsed = JSON.parse(storedUser);
+            setStaffToken(storedToken);
+            setStaffUser(parsed);
+            return;
+          } catch (e) {
+            // Ignore parse error
+          }
+        }
+
         const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -48,6 +61,8 @@ export default function KdsPage() {
           const data = await res.json();
           setStaffToken(data.token);
           setStaffUser(data.user);
+          localStorage.setItem('katha_staff_token', data.token);
+          localStorage.setItem('katha_staff_user', JSON.stringify(data.user));
         } else {
           setError('Kitchen authentication required. Please log in.');
         }
@@ -58,6 +73,12 @@ export default function KdsPage() {
 
     loginKitchenMock();
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('katha_staff_token');
+    localStorage.removeItem('katha_staff_user');
+    window.location.href = '/login';
+  };
 
   // 2. Fetch KDS orders
   const fetchKdsOrders = async () => {
@@ -172,6 +193,20 @@ export default function KdsPage() {
           >
             ← POS Terminal
           </Link>
+
+          <Link
+            href="/login"
+            className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-2.5 py-1 rounded border border-slate-700"
+          >
+            Switch Role
+          </Link>
+
+          <button
+            onClick={handleLogout}
+            className="bg-rose-950/70 hover:bg-rose-900 text-rose-300 text-xs px-2.5 py-1 rounded border border-rose-800/80 transition"
+          >
+            Logout
+          </button>
         </div>
       </header>
 

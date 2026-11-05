@@ -39,7 +39,7 @@ export const MenuSection: React.FC = () => {
           }
         }
       } catch (err) {
-        // Fallback or development mode
+        console.error('[MenuSection] Failed to fetch menu from API:', err);
       }
 
       // Fallback fallback if API not reachable
@@ -83,16 +83,37 @@ export const MenuSection: React.FC = () => {
     <section id="menu" className="py-16 sm:py-24 bg-surface-ivory">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-12">
+        <div className="text-center max-w-2xl mx-auto mb-8">
           <div className="inline-flex items-center space-x-2 text-xs uppercase tracking-widest text-brand-gold font-semibold mb-2">
-            <span>Handcrafted Recipes</span>
+            <span>Handcrafted Recipes • 119 Items</span>
           </div>
           <h2 className="text-3xl sm:text-5xl font-serif font-bold text-brand-forest mb-4">
             Our Café Menu
           </h2>
           <p className="text-kathaText-muted text-sm sm:text-base">
-            Every dish is 100% vegetarian, made fresh to order with authentic spices and wholesome ingredients.
+            Every dish is 100% pure vegetarian, made fresh to order with authentic spices and wholesome ingredients.
           </p>
+        </div>
+
+        {/* Live Table Ordering Callout Banner */}
+        <div className="bg-brand-forest text-white rounded-2xl p-4 sm:p-5 mb-10 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-md border border-brand-gold/30">
+          <div className="flex items-center gap-3.5 text-center sm:text-left">
+            <span className="text-3xl">📱</span>
+            <div>
+              <p className="font-serif font-bold text-base text-surface-paper">
+                Dining at Katha Café? Order with Cart & Quantity Controls
+              </p>
+              <p className="text-xs text-brand-goldSoft mt-0.5">
+                Scan your table QR code with your phone camera, or launch our live Table Cart to customize quantities, add chef notes, and send straight to the kitchen.
+              </p>
+            </div>
+          </div>
+          <a
+            href="/order"
+            className="whitespace-nowrap px-5 py-2.5 rounded-xl bg-brand-gold hover:bg-brand-goldSoft text-brand-forestDeep font-bold text-xs sm:text-sm transition shadow"
+          >
+            Open Live Table Cart →
+          </a>
         </div>
 
         {/* Search bar */}
@@ -180,9 +201,15 @@ export const MenuSection: React.FC = () => {
 
                 <div className="mt-4 pt-3 border-t border-kathaBorder-subtle/40 flex items-center justify-between text-xs text-kathaText-muted">
                   <span className="inline-block px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-medium">
-                    Available
+                    100% Pure Veg
                   </span>
-                  <span className="text-[11px] text-kathaText-muted">Fresh to Order</span>
+                  <a
+                    href="/order"
+                    className="text-[11px] font-bold text-brand-forest hover:text-brand-gold flex items-center gap-1 transition"
+                  >
+                    <span>+ Order at Table</span>
+                    <span>→</span>
+                  </a>
                 </div>
               </div>
             ))}

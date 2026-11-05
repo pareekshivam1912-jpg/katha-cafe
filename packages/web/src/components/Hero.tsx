@@ -23,16 +23,22 @@ export const Hero: React.FC = () => {
           {/* Action buttons */}
           <div className="flex flex-wrap gap-4 items-center mb-12">
             <a
+              href="/order"
+              className="px-6 py-3.5 rounded-lg bg-brand-gold hover:bg-brand-goldSoft text-brand-forestDeep font-bold text-base transition-all shadow-md flex items-center gap-2"
+            >
+              <span>📱 Order at Table (Live QR)</span>
+            </a>
+            <a
               href="#menu"
-              className="px-6 py-3.5 rounded-lg bg-brand-gold hover:bg-brand-goldSoft text-brand-forestDeep font-semibold text-base transition-all shadow-md"
+              className="px-6 py-3.5 rounded-lg bg-brand-forestDeep hover:bg-brand-forest border border-brand-gold/40 text-surface-paper font-medium text-base transition-all"
             >
               Browse Full Menu
             </a>
             <a
               href="#location"
-              className="px-6 py-3.5 rounded-lg bg-brand-forestDeep hover:bg-brand-forest border border-brand-gold/40 text-surface-paper font-medium text-base transition-all"
+              className="px-5 py-3.5 rounded-lg text-surface-paper/80 hover:text-white font-medium text-sm transition-all"
             >
-              Find Us in Jaipur
+              Location & Hours →
             </a>
           </div>
 

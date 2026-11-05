@@ -20,15 +20,21 @@ export const Header: React.FC = () => {
         </a>
 
         {/* Navigation */}
-        <nav className="hidden md:flex items-center space-x-8 text-sm font-medium tracking-wide">
+        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium tracking-wide">
           <a href="#menu" className="hover:text-brand-gold transition-colors">
             Menu
+          </a>
+          <a href="/order" className="text-brand-gold hover:text-white transition-colors flex items-center gap-1 font-semibold">
+            <span>📱 Order at Table</span>
           </a>
           <a href="#story" className="hover:text-brand-gold transition-colors">
             Our Story
           </a>
           <a href="#location" className="hover:text-brand-gold transition-colors">
-            Location & Hours
+            Location
+          </a>
+          <a href="/login" className="hover:text-brand-gold transition-colors text-xs bg-white/10 hover:bg-white/20 px-2.5 py-1 rounded">
+            Staff Portal
           </a>
           <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-brand-forestDeep border border-brand-gold/40 text-xs text-brand-goldSoft">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -37,12 +43,19 @@ export const Header: React.FC = () => {
         </nav>
 
         {/* CTA */}
-        <div>
+        <div className="flex items-center gap-2">
           <a
-            href="#menu"
-            className="px-5 py-2.5 rounded-lg bg-brand-gold hover:bg-brand-goldSoft text-brand-forestDeep font-semibold text-sm transition-all shadow-sm inline-block"
+            href="/order"
+            className="px-3.5 py-2 rounded-lg bg-brand-gold hover:bg-brand-goldSoft text-brand-forestDeep font-bold text-xs sm:text-sm transition-all shadow-sm flex items-center gap-1.5"
           >
-            Explore Menu
+            <span>📱 Order Table</span>
+          </a>
+          <a
+            href="/login"
+            className="md:hidden px-2.5 py-2 rounded-lg bg-white/10 text-white font-medium text-xs hover:bg-white/20 transition"
+            title="Staff Login"
+          >
+            Staff
           </a>
         </div>
       </div>
