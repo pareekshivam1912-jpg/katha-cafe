@@ -17,7 +17,7 @@ Update this file as work proceeds. Do not mark an item complete without evidence
 | DEV-03 | 3 | Menu/public website | Done | Canonical menu seeded (119 items), menu API & Next.js website built |
 | DEV-04 | 4 | Table QR/customer details | Done | Opaque tokens, SHA-256 hash, phone validation, Next.js /order page |
 | DEV-05 | 5 | QR ordering | Done | Server recalculation, idempotency, transactional snapshotting, orders.test.ts passing |
-| DEV-06 | 6 | POS/KDS | Todo | — |
+| DEV-06 | 6 | POS/KDS | Done | POS order creation, QR order review & acceptance, KDS queue & linear progression, pos-kds.test.ts passing |
 | DEV-07 | 7 | Counter payment recording | Todo | No gateway |
 | DEV-08 | 8 | Inventory/reports | Todo | Recipe data pending |
 | DEV-09 | 9 | Hardening/release | Todo | Hosting decision pending |
@@ -52,8 +52,9 @@ See `DECISIONS.md`. Add date, decision, alternatives, cost/license check and app
 | T-08 | Payments | Two tabs race | At most one PAID record | Todo |
 | T-09 | Payments | Client claims success | Server remains non-paid until verified | Todo |
 | T-10 | Roles | Kitchen accesses admin route | Forbidden | Done |
-| T-11 | KDS | Reconnect | No duplicate ticket | Todo |
+| T-11 | KDS | Reconnect | No duplicate ticket | Done |
 | T-12 | Backup | Restore backup | Data restored in test database | Todo |
+
 
 ## 5. Change log
 
@@ -65,3 +66,4 @@ See `DECISIONS.md`. Add date, decision, alternatives, cost/license check and app
 | 2026-11-05 | 3 | Canonical menu imported (23 categories, 119 items), menu CRUD, price auditing, Next.js site | Test execution & build |
 | 2026-11-05 | 4 | Opaque QR tokens, SHA-256 hashing, session lifecycle, phone validation, Next.js /order page | Test execution & build |
 | 2026-11-05 | 5 | Server price recalculation, order idempotency, transactional line items, status token lookup | Test execution & build |
+| 2026-11-05 | 6 | Cashier POS order entry, QR order review & acceptance, KDS queue & linear progression, web UI | Test execution & build |

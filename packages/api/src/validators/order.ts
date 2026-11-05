@@ -17,3 +17,32 @@ export const submitQrOrderSchema = z.object({
   items: z.array(orderItemInputSchema).min(1, 'Order must contain at least one item'),
   notes: z.string().max(500, 'Order notes cannot exceed 500 characters').optional(),
 });
+
+export const createPosOrderSchema = z.object({
+  orderType: z.enum(['DINE_IN', 'TAKEAWAY', 'COUNTER']),
+  tableId: z.string().uuid('Invalid table ID').optional(),
+  customerName: z.string().trim().min(2, 'Customer name must be at least 2 characters').max(100).optional(),
+  customerMobile: z
+    .string()
+    .trim()
+    .regex(/^[6-9]\d{9}$/, 'Mobile must be a 10-digit Indian number starting with 6-9')
+    .optional(),
+  idempotencyKey: z
+    .string()
+    .trim()
+    .min(8, 'Idempotency key must be at least 8 characters')
+    .max(128)
+    .optional(),
+  items: z.array(orderItemInputSchema).min(1, 'Order must contain at least one item'),
+  notes: z.string().max(500, 'Order notes cannot exceed 500 characters').optional(),
+});
+
+export const rejectOrderSchema = z.object({
+  reason: z.string().trim().min(2, 'Rejection reason is required').max(300),
+});
+
+export const updateKdsStatusSchema = z.object({
+  status: z.enum(['PREPARING', 'READY', 'SERVED']),
+  notes: z.string().max(300).optional(),
+});
+

@@ -59,12 +59,12 @@
 - [x] Phase commit created.
 
 ## Phase 6 — POS/KDS
-- [ ] Staff can create orders.
-- [ ] QR order acceptance/rejection works.
-- [ ] Kitchen queue receives accepted order once.
-- [ ] Status transitions and audit history work.
-- [ ] Reconnect behavior tested.
-- [ ] Phase commit created.
+- [x] Staff can create orders.
+- [x] QR order acceptance/rejection works.
+- [x] Kitchen queue receives accepted order once.
+- [x] Status transitions and audit history work.
+- [x] Reconnect behavior tested.
+- [x] Phase commit created.
 
 ## Phase 7 — Payments
 - [ ] Counter-only payment recording scope confirmed.

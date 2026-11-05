@@ -7,6 +7,8 @@ import { authRouter } from './routes/auth.js';
 import { menuRouter } from './routes/menu.js';
 import { tablesRouter } from './routes/tables.js';
 import { ordersRouter } from './routes/orders.js';
+import { posRouter } from './routes/pos.js';
+import { kdsRouter } from './routes/kds.js';
 
 export function createApp(): Express {
   const app = express();
@@ -26,6 +28,8 @@ export function createApp(): Express {
   app.use('/api', menuRouter);
   app.use('/api', tablesRouter);
   app.use('/api', ordersRouter);
+  app.use('/api/pos', posRouter);
+  app.use('/api/kds', kdsRouter);
 
   // 404 handler
   app.use((_req, res) => {

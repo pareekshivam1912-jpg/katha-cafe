@@ -110,3 +110,16 @@ Record every material technical/product decision here.
 - **Reason:** Satisfies PRD Section 4.4, prevents fraudulent pricing or duplicate kitchen ticket spam, and guarantees customer order recovery.
 - **Status:** Accepted and verified in Phase 5.
 
+## D-014 — Staff POS order entry, Cashier QR review, and Kitchen Display System (KDS) state progression
+- **Decision:**
+  1. **Staff POS Order Creation (`POST /api/pos/orders`):** Authorized cashiers, managers, and admins create direct orders across types (`COUNTER`, `DINE_IN`, `TAKEAWAY`) with full server-side price recalculation. POS orders transition immediately to `ACCEPTED` status, entering the kitchen queue directly without requiring secondary approval.
+  2. **Cashier QR Order Review (`/api/pos/orders/pending`):** Customer QR orders arrive in `SUBMITTED` status and appear in the Cashier review queue. Cashiers can accept orders (`POST /api/pos/orders/:id/accept`), transitioning them to `ACCEPTED` for kitchen display, or reject them (`POST /api/pos/orders/:id/reject`) with a mandatory reason, transitioning them to `REJECTED`.
+  3. **Kitchen Display System (KDS) Ticket Queue (`GET /api/kds/orders`):** Kitchen monitors active orders in statuses `('ACCEPTED', 'PREPARING', 'READY')`. Financial data (unit prices and order totals) is strictly omitted from the kitchen view to enforce privacy and focus on preparation efficiency. Elapsed time is computed in real-time.
+  4. **Strict State-Machine Progression (`PATCH /api/kds/orders/:id/status`):** Enforces linear transitions: `ACCEPTED` → `PREPARING` → `READY` → `SERVED`. Invalid transitions (e.g. jumping `ACCEPTED` to `SERVED`, or advancing cancelled/served tickets) are rejected with HTTP 400 `InvalidTransition`. Served orders automatically drop out of the active kitchen queue.
+  5. **Immutable Audit Trail:** Every status change is recorded in `order_status_history` with previous status, new status, staff user ID, timestamp, and context notes.
+  6. **Web Interfaces:** Dedicated cashier POS (`/pos`) and dark-theme high-contrast kitchen terminal (`/kds`) interfaces created in `@katha-cafe/web`.
+- **Dependencies Added:** None (built with existing monorepo dependencies).
+- **Reason:** Fulfills PRD Section 4.5 & 4.6, guarantees clear segregation between customer orders, cashier review, and kitchen fulfillment, and prevents orphaned or skipped kitchen tickets.
+- **Status:** Accepted and verified in Phase 6.
+
+
