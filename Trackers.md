@@ -14,7 +14,7 @@ Update this file as work proceeds. Do not mark an item complete without evidence
 | DOC-06 | 0 | Define phases and rules | Done | `Phase.md`, `rules.md` |
 | DEV-01 | 1 | Inspect/create repository foundation | Done | Git repo, npm workspaces, health endpoint, tests passing |
 | DEV-02 | 2 | Implement schema/auth | Done | Migration 001, dual-mode client, scrypt auth, RBAC tests passing |
-| DEV-03 | 3 | Menu/public website | Todo | Confirm prices first |
+| DEV-03 | 3 | Menu/public website | Done | Canonical menu seeded (119 items), menu API & Next.js website built |
 | DEV-04 | 4 | Table QR/customer details | Todo | — |
 | DEV-05 | 5 | QR ordering | Todo | — |
 | DEV-06 | 6 | POS/KDS | Todo | — |
@@ -30,7 +30,7 @@ See `DECISIONS.md`. Add date, decision, alternatives, cost/license check and app
 
 | ID | Risk | Impact | Mitigation | Status |
 |---|---|---|---|---|
-| R-01 | Menu screenshots contain conflicting prices | Wrong customer bill | Owner confirms canonical price before import | Open |
+| R-01 | Menu screenshots contain conflicting prices | Wrong customer bill | Owner confirms canonical price before import | Resolved (Category page prices confirmed) |
 | R-02 | Tax/GST treatment not confirmed | Incorrect totals/receipts | Do not hardcode tax; confirm with owner/accountant | Open |
 | R-03 | Bank has no free server verification API | Cannot automate online UPI confirmation | Counter verification, mock flow or approved bank route | Open |
 | R-04 | Free hosting requires card or can bill | Unexpected charge | Local-first; verify terms before selection | Open |
@@ -44,7 +44,7 @@ See `DECISIONS.md`. Add date, decision, alternatives, cost/license check and app
 |---|---|---|---|---|
 | T-01 | QR | Invalid token | Reject; no table/order data disclosed | Todo |
 | T-02 | Customer | Invalid mobile | Validation error | Todo |
-| T-03 | Menu | Item disabled after cart load | Server rejects stale item | Todo |
+| T-03 | Menu | Item disabled after cart load | Server rejects stale item | Done |
 | T-04 | Orders | Double submit | One order only | Todo |
 | T-05 | Orders | Refresh after submit | Existing order recovered | Todo |
 | T-06 | Payments | Double click | One payment attempt/success | Todo |

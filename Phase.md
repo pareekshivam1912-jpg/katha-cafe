@@ -36,12 +36,12 @@
 - [x] Phase commit created.
 
 ## Phase 3 — Menu/public site
-- [ ] Owner confirms authoritative menu prices.
-- [ ] Menu CRUD permissions tested.
-- [ ] Public menu reads from database.
-- [ ] Unavailable items cannot be ordered.
-- [ ] Responsive checks pass.
-- [ ] Phase commit created.
+- [x] Owner confirms authoritative menu prices.
+- [x] Menu CRUD permissions tested.
+- [x] Public menu reads from database.
+- [x] Unavailable items cannot be ordered.
+- [x] Responsive checks pass.
+- [x] Phase commit created.
 
 ## Phase 4 — QR/table
 - [ ] Unique opaque QR token per table.

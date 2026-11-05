@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-ivory: #F7F0E2;
+  --bg-forest: #063B27;
+  --gold-accent: #C6922E;
+}
+
+body {
+  background-color: var(--bg-ivory);
+  color: #20251F;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .brand-serif {
+  font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+}

@@ -7,8 +7,8 @@ Last updated: 2026-11-05
 | 0 | Documentation baseline | done | Markdown specification pack created; initial baseline committed |
 | 1 | Repository/local foundation | done | Monorepo initialized, pinned dependencies installed, health check API running, tests passing |
 | 2 | Database/authentication | done | PostgreSQL schema migrations, dual-mode PGlite/pg client, scrypt password hashing, MOCK seed data, and RBAC auth tested |
-| 3 | Menu/public website | todo | Blocked by Phase 2 approval; menu price conflicts require owner confirmation |
-| 4 | Tables/QR/customer details | todo | Blocked by prior phases |
+| 3 | Menu/public website | done | Canonical menu imported (23 categories, 119 items), menu CRUD and price auditing tested, Next.js responsive website built |
+| 4 | Tables/QR/customer details | todo | Blocked by Phase 3 approval |
 | 5 | QR ordering | todo | Blocked by prior phases |
 | 6 | POS/KDS | todo | Blocked by prior phases |
 | 7 | Counter payment recording | todo | No online gateway included |
@@ -20,3 +20,4 @@ Last updated: 2026-11-05
 - Phase 0: Documentation files generated, packaged, and committed in initial baseline commit (`docs(phase-0)`).
 - Phase 1: Git repository initialized in `D:\CAFE\KathaCafeDocs`. Monorepo created with npm workspaces. Pinned dependencies installed from lockfile. TypeScript built to `packages/api/dist`. Vitest unit and HTTP integration tests executed and passing (2/2 passing). GET `/api/health` verified with 200 OK response returning status, uptime, environment, and ISO timestamp.
 - Phase 2: PostgreSQL schema migration `001_initial_schema.sql` created in `@katha-cafe/db`. Dual-mode PGlite/pg client created. Database constraints (unique username, role check, and partial unique index on payments) tested. Built-in `crypto.scrypt` password hashing and verification implemented. MOCK staff accounts (`admin_mock`, `manager_mock`, `cashier_mock`, `kitchen_mock`) seeded and clearly labelled. Auth router (`/api/auth/login`, `/api/auth/logout`, `/api/auth/me`) and RBAC middleware (`requireAuth`, `requireRole`) implemented and tested (19/19 tests passing across workspace).
+- Phase 3: Canonical menu data transcribed and seeded from `menu.md` across 23 categories and 119 items with integer paise prices. Confirmed prices applied for 4 flagged items. Menu REST API (`/api/menu`, `/api/menu/categories`, `/api/admin/menu/items`, `/api/admin/menu/items/:id/price`) implemented and tested with price change auditing. Next.js 15 responsive website built in `@katha-cafe/web` with Katha Cafe brand tokens (forest green, warm ivory, antique gold). All 25 workspace tests passing.

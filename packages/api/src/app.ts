@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import { env } from './config/env.js';
 import { healthRouter } from './routes/health.js';
 import { authRouter } from './routes/auth.js';
+import { menuRouter } from './routes/menu.js';
 
 export function createApp(): Express {
   const app = express();
@@ -20,6 +21,7 @@ export function createApp(): Express {
   // Mount API routes
   app.use('/api', healthRouter);
   app.use('/api', authRouter);
+  app.use('/api', menuRouter);
 
   // 404 handler
   app.use((_req, res) => {

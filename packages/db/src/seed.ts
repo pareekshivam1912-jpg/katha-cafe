@@ -1,5 +1,53 @@
 import { DbClient, getDb } from './client.js';
 import { hashPassword } from './crypto.js';
+import { CANONICAL_MENU_DATA } from './data/menuData.js';
+
+export async function seedMenuData(db?: DbClient): Promise<{ categoriesCount: number; itemsCount: number }> {
+  const client = db || (await getDb());
+  console.log('[db] Importing canonical menu categories and items from menu.md...');
+
+  let categoriesCount = 0;
+  let itemsCount = 0;
+
+  for (const cat of CANONICAL_MENU_DATA) {
+    const catResult = await client.query<{ id: string }>(
+      `
+      INSERT INTO menu_categories (name, display_order, is_active)
+      VALUES ($1, $2, TRUE)
+      ON CONFLICT (name) DO UPDATE
+      SET display_order = EXCLUDED.display_order, is_active = TRUE
+      RETURNING id;
+      `,
+      [cat.name, cat.displayOrder]
+    );
+
+    const categoryId = catResult.rows[0].id;
+    categoriesCount++;
+
+    let itemOrder = 1;
+    for (const item of cat.items) {
+      await client.query(
+        `
+        INSERT INTO menu_items (category_id, name, description, price_paise, is_available, display_order)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT DO NOTHING;
+        `,
+        [
+          categoryId,
+          item.name,
+          item.description || null,
+          item.pricePaise,
+          item.isAvailable !== false,
+          itemOrder++,
+        ]
+      );
+      itemsCount++;
+    }
+  }
+
+  console.log(`[db] Canonical menu imported: ${categoriesCount} categories, ${itemsCount} items.`);
+  return { categoriesCount, itemsCount };
+}
 
 export async function seedMockData(db?: DbClient): Promise<void> {
   const client = db || (await getDb());
@@ -65,6 +113,9 @@ export async function seedMockData(db?: DbClient): Promise<void> {
       [table.label, table.tokenHash]
     );
   }
+
+  // Also import canonical menu items
+  await seedMenuData(client);
 
   console.log('[db] MOCK seed data loaded successfully.');
 }

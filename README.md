@@ -21,7 +21,8 @@ This repository documentation defines the Katha Cafe website, QR table ordering,
 - **Phase 0 (Documentation baseline):** Done.
 - **Phase 1 (Repository and local development foundation):** Done. Git repository initialized, npm workspaces monorepo configured, pinned dependencies installed from lockfile, TypeScript built, health endpoint and tests verified.
 - **Phase 2 (Database and authentication):** Done. PostgreSQL schema migrations (`001_initial_schema.sql`), dual-mode PGlite/pg client, scrypt password hashing, MOCK staff accounts, and RBAC auth routes (`/api/auth/login`, `/api/auth/me`, `/api/auth/logout`) implemented and verified (19/19 tests passing).
-- **Phases 3–9:** Todo. Blocked pending sequential approval.
+- **Phase 3 (Menu and public website):** Done. Canonical menu imported from `menu.md` (23 categories, 119 items with integer paise prices), price change auditing and availability toggling tested, Next.js 15 responsive website built in `@katha-cafe/web` matching brand tokens. All 25 workspace tests passing.
+- **Phases 4–9:** Todo. Blocked pending sequential approval.
 
 ## Local development instructions
 
@@ -38,23 +39,17 @@ This repository documentation defines the Katha Cafe website, QR table ordering,
    ```bash
    npm install
    ```
-3. Run test suite:
+3. Run complete test suite:
    ```bash
    npm test
    ```
-4. Build all packages:
+4. Build all packages (API, DB, and Web):
    ```bash
    npm run build
    ```
-5. Start development API:
-   ```bash
-   npm run dev
-   ```
-   Or run the compiled server:
-   ```bash
-   npm start
-   ```
-   Verify health endpoint: `GET http://localhost:4000/api/health`
+5. Start development servers:
+   - Backend API: `npm --workspace=@katha-cafe/api run dev` (runs on http://localhost:4000)
+   - Public Website: `npm --workspace=@katha-cafe/web run dev` (runs on http://localhost:3000)
 
 ## Café details supplied for this project
 

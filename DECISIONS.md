@@ -73,3 +73,16 @@ Record every material technical/product decision here.
   - `cookie-parser`: 1.4.7 (License: MIT) — parse HTTP cookies.
 - **Reason:** Confirmed by user; enables full offline, zero-card, local-first development while preserving PostgreSQL schema fidelity and constraints.
 - **Status:** Accepted and verified in Phase 2.
+
+## D-011 — Authoritative menu prices and Next.js public website
+- **Decision:**
+  1. **Canonical Menu Prices:** Per user confirmation, detailed category page prices are adopted as authoritative for the 4 previously flagged items (Cheese Garlic Bread: ₹90 / 9000 paise; Bombay Grill Sandwich: ₹110 / 11000 paise; Indiana Pizza: ₹170 / 17000 paise; Penne Alfredo: ₹170 / 17000 paise).
+  2. **Public Website:** Next.js 15 App Router with React 19 and Tailwind CSS in `packages/web`, using Katha Cafe brand tokens (forest green `#063B27`, warm ivory `#F7F0E2`, antique gold `#C6922E`, and editorial serif typography) fetching live menu data from the API.
+  3. **Price Auditing:** Any staff modification to `price_paise` automatically writes an immutable audit record to `audit_logs` capturing user, old price, new price, and mandatory reason.
+- **Dependencies Added:**
+  - `next`: 15.2.1 (License: MIT) — React framework.
+  - `react`: 19.0.0 (License: MIT) — UI library.
+  - `react-dom`: 19.0.0 (License: MIT) — DOM renderer.
+  - `tailwindcss`: 3.4.17 (License: MIT) — utility CSS styling.
+- **Reason:** Satisfies owner confirmation gate, fulfills Design.md specifications, and ensures full price integrity.
+- **Status:** Accepted and verified in Phase 3.
