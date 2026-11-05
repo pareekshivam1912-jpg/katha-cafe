@@ -86,3 +86,15 @@ Record every material technical/product decision here.
   - `tailwindcss`: 3.4.17 (License: MIT) — utility CSS styling.
 - **Reason:** Satisfies owner confirmation gate, fulfills Design.md specifications, and ensures full price integrity.
 - **Status:** Accepted and verified in Phase 3.
+
+## D-012 — Opaque QR tokens, token hashing, and customer identification
+- **Decision:**
+  1. **Opaque Tokens:** Tables are identified by 32-byte cryptographically secure random hex tokens (`crypto.randomBytes(32)`), preventing guessable/sequential table ID tampering (e.g. `table=1`).
+  2. **Token Hashing:** In accordance with Schema.md, only the SHA-256 hash of the token (`qr_token_hash`) is stored in the database. Resolving a QR hashes the incoming token before lookup.
+  3. **Zero Token/ID Leakage:** Public resolution payload exposes only presentation data (`tableLabel: "Table 4"`, `sessionId`), never leaking database UUIDs or token hashes.
+  4. **Customer Validation:** Full name required (min 2 chars). Mobile number strictly validated for 10-digit Indian formats (`[6-9]\d{9}`) and normalized to E.164 (`+91XXXXXXXXXX`). No password or customer account registration required.
+  5. **Session Control:** Closed table sessions reject subsequent customer identification and order submissions.
+- **Dependencies Added:**
+  - `qrcode`: 1.5.4 (License: MIT) — local QR code generation.
+- **Reason:** Enforces customer privacy, prevents cross-table tampering, and satisfies PRD Section 4.3.
+- **Status:** Accepted and verified in Phase 4.

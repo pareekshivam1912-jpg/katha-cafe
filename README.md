@@ -22,7 +22,8 @@ This repository documentation defines the Katha Cafe website, QR table ordering,
 - **Phase 1 (Repository and local development foundation):** Done. Git repository initialized, npm workspaces monorepo configured, pinned dependencies installed from lockfile, TypeScript built, health endpoint and tests verified.
 - **Phase 2 (Database and authentication):** Done. PostgreSQL schema migrations (`001_initial_schema.sql`), dual-mode PGlite/pg client, scrypt password hashing, MOCK staff accounts, and RBAC auth routes (`/api/auth/login`, `/api/auth/me`, `/api/auth/logout`) implemented and verified (19/19 tests passing).
 - **Phase 3 (Menu and public website):** Done. Canonical menu imported from `menu.md` (23 categories, 119 items with integer paise prices), price change auditing and availability toggling tested, Next.js 15 responsive website built in `@katha-cafe/web` matching brand tokens. All 25 workspace tests passing.
-- **Phases 4–9:** Todo. Blocked pending sequential approval.
+- **Phase 4 (Tables, QR codes and customer details):** Done. Opaque 32-byte table tokens, SHA-256 hash lookup in database, zero token/ID leakage, 10-digit Indian mobile validation with E.164 normalization, session closure enforcement, and Next.js customer ordering entry page (`/order`). All 30 workspace tests passing.
+- **Phases 5–9:** Todo. Blocked pending sequential approval.
 
 ## Local development instructions
 

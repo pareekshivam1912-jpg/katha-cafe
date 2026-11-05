@@ -44,11 +44,11 @@
 - [x] Phase commit created.
 
 ## Phase 4 — QR/table
-- [ ] Unique opaque QR token per table.
-- [ ] Customer name and mobile validation.
-- [ ] Invalid/closed QR rejected.
-- [ ] No guessable table identifiers exposed.
-- [ ] Phase commit created.
+- [x] Unique opaque QR token per table.
+- [x] Customer name and mobile validation.
+- [x] Invalid/closed QR rejected.
+- [x] No guessable table identifiers exposed.
+- [x] Phase commit created.
 
 ## Phase 5 — QR orders
 - [ ] Server recalculates prices and totals.

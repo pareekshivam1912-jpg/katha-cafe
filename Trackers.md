@@ -15,7 +15,7 @@ Update this file as work proceeds. Do not mark an item complete without evidence
 | DEV-01 | 1 | Inspect/create repository foundation | Done | Git repo, npm workspaces, health endpoint, tests passing |
 | DEV-02 | 2 | Implement schema/auth | Done | Migration 001, dual-mode client, scrypt auth, RBAC tests passing |
 | DEV-03 | 3 | Menu/public website | Done | Canonical menu seeded (119 items), menu API & Next.js website built |
-| DEV-04 | 4 | Table QR/customer details | Todo | — |
+| DEV-04 | 4 | Table QR/customer details | Done | Opaque tokens, SHA-256 hash, phone validation, Next.js /order page |
 | DEV-05 | 5 | QR ordering | Todo | — |
 | DEV-06 | 6 | POS/KDS | Todo | — |
 | DEV-07 | 7 | Counter payment recording | Todo | No gateway |
@@ -42,8 +42,8 @@ See `DECISIONS.md`. Add date, decision, alternatives, cost/license check and app
 
 | Test ID | Area | Scenario | Expected result | Status |
 |---|---|---|---|---|
-| T-01 | QR | Invalid token | Reject; no table/order data disclosed | Todo |
-| T-02 | Customer | Invalid mobile | Validation error | Todo |
+| T-01 | QR | Invalid token | Reject; no table/order data disclosed | Done |
+| T-02 | Customer | Invalid mobile | Validation error | Done |
 | T-03 | Menu | Item disabled after cart load | Server rejects stale item | Done |
 | T-04 | Orders | Double submit | One order only | Todo |
 | T-05 | Orders | Refresh after submit | Existing order recovered | Todo |
