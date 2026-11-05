@@ -3,6 +3,33 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
+interface MenuItem {
+  id: string;
+  name: string;
+  description?: string | null;
+  pricePaise: number;
+  priceInr: number;
+  isAvailable: boolean;
+  categoryName: string;
+}
+
+interface CartItem {
+  menuItemId: string;
+  name: string;
+  unitPriceInr: number;
+  quantity: number;
+  notes?: string;
+}
+
+interface PlacedOrder {
+  orderId: string;
+  orderNumber: string;
+  status: string;
+  totalInr: number;
+  publicStatusToken: string;
+  items: { name: string; quantity: number; unitPriceInr: number }[];
+}
+
 function OrderContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
@@ -14,10 +41,28 @@ function OrderContent() {
   // Customer form state
   const [fullName, setFullName] = useState('');
   const [mobile, setMobile] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const [submittingCustomer, setSubmittingCustomer] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [customer, setCustomer] = useState<{ id: string; fullName: string; mobileE164: string } | null>(null);
 
+  // Menu State
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loadingMenu, setLoadingMenu] = useState(false);
+
+  // Cart State
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [showCartModal, setShowCartModal] = useState(false);
+  const [orderNotes, setOrderNotes] = useState('');
+  const [submittingOrder, setSubmittingOrder] = useState(false);
+  const [orderError, setOrderError] = useState<string | null>(null);
+
+  // Placed Order State
+  const [placedOrder, setPlacedOrder] = useState<PlacedOrder | null>(null);
+
+  // 1. Resolve Table from Opaque Token
   useEffect(() => {
     if (!token) {
       setError('No table QR token detected. Please scan the QR code placed on your table.');
@@ -50,6 +95,66 @@ function OrderContent() {
     resolveTable();
   }, [token]);
 
+  // 2. Fetch Menu Items once table is resolved
+  useEffect(() => {
+    if (!tableInfo) return;
+
+    async function fetchMenu() {
+      setLoadingMenu(true);
+      try {
+        const res = await fetch('http://localhost:4000/api/menu');
+        if (res.ok) {
+          const data = await res.json();
+          const items: MenuItem[] = [];
+          const catList: string[] = ['All'];
+
+          for (const cat of data.categories || []) {
+            catList.push(cat.name);
+            for (const item of cat.items || []) {
+              items.push({
+                id: item.id,
+                name: item.name,
+                description: item.description,
+                pricePaise: item.pricePaise,
+                priceInr: item.priceInr,
+                isAvailable: item.isAvailable,
+                categoryName: cat.name,
+              });
+            }
+          }
+          setCategories(catList);
+          setMenuItems(items);
+        }
+      } catch (err) {
+        console.error('Failed to load menu for QR ordering:', err);
+      } finally {
+        setLoadingMenu(false);
+      }
+    }
+
+    fetchMenu();
+  }, [tableInfo]);
+
+  // 3. Poll Live Order Status when order is placed
+  useEffect(() => {
+    if (!placedOrder?.publicStatusToken) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`http://localhost:4000/api/orders/${placedOrder.publicStatusToken}/status`);
+        if (res.ok) {
+          const data = await res.json();
+          setPlacedOrder((prev) => (prev ? { ...prev, status: data.status } : null));
+        }
+      } catch (err) {
+        // network polling error ignored
+      }
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [placedOrder?.publicStatusToken]);
+
+  // Handle Customer Identification
   const handleIdentifyCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
@@ -67,7 +172,7 @@ function OrderContent() {
 
     if (!tableInfo) return;
 
-    setSubmitting(true);
+    setSubmittingCustomer(true);
     try {
       const res = await fetch('http://localhost:4000/api/table-sessions/identify-customer', {
         method: 'POST',
@@ -89,160 +194,525 @@ function OrderContent() {
     } catch (err) {
       setFormError('Network connection failed. Please try again.');
     } finally {
-      setSubmitting(false);
+      setSubmittingCustomer(false);
     }
   };
 
+  // Cart operations
+  const addToCart = (item: MenuItem) => {
+    setCart((prev) => {
+      const existing = prev.find((c) => c.menuItemId === item.id);
+      if (existing) {
+        return prev.map((c) => (c.menuItemId === item.id ? { ...c, quantity: c.quantity + 1 } : c));
+      }
+      return [
+        ...prev,
+        {
+          menuItemId: item.id,
+          name: item.name,
+          unitPriceInr: item.priceInr,
+          quantity: 1,
+        },
+      ];
+    });
+  };
+
+  const updateQuantity = (menuItemId: string, delta: number) => {
+    setCart((prev) =>
+      prev
+        .map((c) => {
+          if (c.menuItemId === menuItemId) {
+            const nextQty = c.quantity + delta;
+            return nextQty > 0 ? { ...c, quantity: nextQty } : null;
+          }
+          return c;
+        })
+        .filter(Boolean) as CartItem[]
+    );
+  };
+
+  const cartTotal = cart.reduce((sum, item) => sum + item.unitPriceInr * item.quantity, 0);
+  const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  // Submit QR Order
+  const handlePlaceOrder = async () => {
+    if (!tableInfo || !customer || cart.length === 0) return;
+
+    setSubmittingOrder(true);
+    setOrderError(null);
+
+    const idempotencyKey = `qr-order-${customer.id}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+    try {
+      const res = await fetch('http://localhost:4000/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: tableInfo.sessionId,
+          customerId: customer.id,
+          idempotencyKey,
+          items: cart.map((c) => ({
+            menuItemId: c.menuItemId,
+            quantity: c.quantity,
+            notes: c.notes || undefined,
+          })),
+          notes: orderNotes.trim() || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setOrderError(data.message || 'Failed to place order. Please review your cart.');
+        return;
+      }
+
+      setPlacedOrder({
+        orderId: data.orderId,
+        orderNumber: data.orderNumber,
+        status: data.status,
+        totalInr: data.totalInr,
+        publicStatusToken: data.publicStatusToken,
+        items: cart.map((c) => ({ name: c.name, quantity: c.quantity, unitPriceInr: c.unitPriceInr })),
+      });
+      setCart([]);
+      setShowCartModal(false);
+    } catch (err) {
+      setOrderError('Network error while placing order. Please try again.');
+    } finally {
+      setSubmittingOrder(false);
+    }
+  };
+
+  const filteredItems = menuItems.filter((item) => {
+    const matchesCat = selectedCategory === 'All' || item.categoryName === selectedCategory;
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCat && matchesSearch;
+  });
+
   return (
-    <div className="min-h-screen bg-surface-ivory flex flex-col justify-between p-4 sm:p-6">
-      <div className="max-w-md w-full mx-auto my-auto py-8">
-        {/* Header Branding */}
-        <div className="text-center mb-8">
-          <div className="inline-flex w-12 h-12 rounded-full bg-brand-forest text-brand-gold text-2xl font-serif font-bold items-center justify-center mb-3 shadow-sm">
+    <div className="min-h-screen bg-[#F7F0E2] flex flex-col font-sans">
+      {/* Top Header */}
+      <header className="bg-[#063B27] text-white px-4 py-3 sticky top-0 z-40 shadow border-b border-[#C6922E]/40 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <span className="w-8 h-8 rounded-full bg-[#C6922E]/20 border border-[#C6922E] flex items-center justify-center font-serif font-bold text-sm text-[#C6922E]">
             कथा
+          </span>
+          <div>
+            <span className="block font-serif font-bold text-base tracking-wide text-white">
+              Katha Café
+            </span>
+            <span className="block text-[10px] text-[#C6922E] uppercase tracking-wider font-semibold">
+              100% Pure Veg • Jaipur
+            </span>
           </div>
-          <h1 className="text-2xl font-serif font-bold text-brand-forest">
-            Katha Cafe Table Ordering
-          </h1>
-          <p className="text-xs text-kathaText-muted">Pure Vegetarian • Jaipur</p>
         </div>
 
+        {tableInfo && (
+          <div className="text-right">
+            <span className="block text-[10px] text-white/70 uppercase tracking-wider font-medium">Seated At</span>
+            <span className="inline-block bg-[#C6922E] text-[#063B27] font-bold text-xs px-2 py-0.5 rounded">
+              {tableInfo.tableLabel}
+            </span>
+          </div>
+        )}
+      </header>
+
+      {/* Main Container */}
+      <main className="flex-1 p-4 max-w-xl mx-auto w-full pb-24">
         {/* Loading State */}
         {loading && (
-          <div className="bg-surface-paper rounded-xl p-8 border border-kathaBorder-subtle text-center shadow-sm">
-            <p className="text-sm text-kathaText-muted animate-pulse">Resolving table session...</p>
+          <div className="bg-white rounded-2xl p-8 border border-gray-200 text-center shadow-sm my-8">
+            <p className="text-sm text-gray-500 animate-pulse">Resolving your table session...</p>
           </div>
         )}
 
-        {/* Error State (Invalid/Disabled QR) */}
+        {/* Error State (Invalid/Missing QR) */}
         {!loading && error && (
-          <div className="bg-surface-paper rounded-xl p-8 border border-red-200 text-center shadow-sm">
-            <div className="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto mb-4 text-xl font-bold">
+          <div className="bg-white rounded-2xl p-8 border border-red-200 text-center shadow-sm my-8">
+            <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-3 text-xl font-bold">
               ✕
             </div>
-            <h2 className="text-lg font-serif font-bold text-red-800 mb-2">
-              QR Code Unavailable
-            </h2>
-            <p className="text-sm text-kathaText-muted mb-6">
-              {error}
-            </p>
+            <h2 className="text-lg font-serif font-bold text-red-800 mb-2">QR Code Unavailable</h2>
+            <p className="text-xs text-gray-600 mb-6">{error}</p>
             <a
               href="/"
-              className="inline-block px-5 py-2.5 rounded-lg bg-brand-forest text-surface-paper text-xs font-semibold hover:bg-brand-forestDeep transition-all"
+              className="inline-block px-5 py-2.5 rounded-lg bg-[#063B27] text-white text-xs font-semibold hover:bg-[#084d33] transition"
             >
               Return to Homepage
             </a>
           </div>
         )}
 
-        {/* Valid Table Detected */}
-        {!loading && !error && tableInfo && (
-          <div className="bg-surface-paper rounded-xl p-6 sm:p-8 border border-kathaBorder-subtle shadow-md">
-            {/* Read-only Table Badge */}
-            <div className="flex items-center justify-between pb-4 mb-6 border-b border-kathaBorder-subtle">
-              <div>
-                <span className="block text-[11px] uppercase tracking-wider text-kathaText-muted font-semibold">
-                  Detected Table
-                </span>
-                <span className="block text-xl font-serif font-bold text-brand-forest">
-                  {tableInfo.tableLabel}
-                </span>
-              </div>
-              <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
-                Dine In Active
-              </span>
+        {/* Step 1: Customer Identification Form */}
+        {!loading && !error && tableInfo && !customer && (
+          <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-md my-4">
+            <div className="text-center mb-6">
+              <span className="text-2xl block mb-1">👋</span>
+              <h2 className="font-serif font-bold text-xl text-[#063B27]">Welcome to Katha Café!</h2>
+              <p className="text-xs text-gray-600 mt-1">
+                You are seated at <strong className="text-[#063B27]">{tableInfo.tableLabel}</strong>. Please enter your name and phone number to start ordering.
+              </p>
             </div>
 
-            {/* Customer Identification Form */}
-            {!customer ? (
-              <form onSubmit={handleIdentifyCustomer} className="space-y-4">
-                <div className="mb-2">
-                  <h2 className="text-base font-serif font-bold text-kathaText-primary">
-                    Please Enter Your Details
-                  </h2>
-                  <p className="text-xs text-kathaText-muted">
-                    Required to associate your order with your table. No account or password needed.
-                  </p>
-                </div>
+            {formError && (
+              <div className="p-3 mb-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs">
+                {formError}
+              </div>
+            )}
 
-                {formError && (
-                  <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs">
-                    {formError}
-                  </div>
-                )}
+            <form onSubmit={handleIdentifyCustomer} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Your Full Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Aarav Sharma"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#063B27]"
+                />
+              </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-kathaText-primary mb-1">
-                    Full Name
-                  </label>
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">10-Digit Mobile Number</label>
+                <div className="flex rounded-lg border border-gray-300 overflow-hidden focus-within:ring-2 focus-within:ring-[#063B27]">
+                  <span className="bg-gray-100 px-3 py-2.5 text-xs text-gray-600 font-medium border-r border-gray-300 flex items-center">
+                    +91
+                  </span>
                   <input
-                    type="text"
+                    type="tel"
                     required
-                    placeholder="e.g. Aarav Sharma"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-lg border border-kathaBorder-subtle bg-surface-ivory/50 text-sm focus:outline-none focus:ring-2 focus:ring-brand-gold"
+                    placeholder="9876543210"
+                    maxLength={10}
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value)}
+                    className="w-full px-3.5 py-2.5 text-sm focus:outline-none"
                   />
                 </div>
+                <p className="text-[10px] text-gray-400 mt-1">No password or app download required.</p>
+              </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-kathaText-primary mb-1">
-                    10-digit Mobile Number
-                  </label>
-                  <div className="flex rounded-lg border border-kathaBorder-subtle overflow-hidden focus-within:ring-2 focus-within:ring-brand-gold">
-                    <span className="bg-surface-ivory px-3 py-2.5 text-xs text-kathaText-muted font-medium border-r border-kathaBorder-subtle flex items-center">
-                      +91
-                    </span>
-                    <input
-                      type="tel"
-                      required
-                      placeholder="9876543210"
-                      maxLength={10}
-                      value={mobile}
-                      onChange={(e) => setMobile(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-surface-ivory/50 text-sm focus:outline-none"
-                    />
-                  </div>
-                </div>
+              <button
+                type="submit"
+                disabled={submittingCustomer}
+                className="w-full mt-2 py-3 rounded-lg bg-[#063B27] hover:bg-[#084d33] text-[#C6922E] font-bold text-sm transition shadow-sm disabled:opacity-50"
+              >
+                {submittingCustomer ? 'Connecting...' : 'View Menu & Order →'}
+              </button>
+            </form>
+          </div>
+        )}
 
+        {/* Step 2: Live Menu & Cart Ordering (Once customer is identified and hasn't placed order) */}
+        {!loading && !error && tableInfo && customer && !placedOrder && (
+          <div className="space-y-4">
+            {/* Customer Header Pill */}
+            <div className="bg-white p-3 rounded-xl border border-gray-200 flex items-center justify-between text-xs shadow-sm">
+              <div>
+                <span className="text-gray-500">Ordering for: </span>
+                <strong className="text-gray-900">{customer.fullName}</strong>
+              </div>
+              <span className="text-gray-500 font-mono text-[11px]">{customer.mobileE164}</span>
+            </div>
+
+            {/* Search Bar */}
+            <div className="bg-white p-2.5 rounded-xl border border-gray-200 shadow-sm">
+              <input
+                type="text"
+                placeholder="Search dishes (e.g. Bun Maska, Kulhad Chai, Pizza)..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#063B27]"
+              />
+            </div>
+
+            {/* Horizontal Category Carousel */}
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+              {categories.map((cat) => (
                 <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full mt-4 py-3 rounded-lg bg-brand-forest hover:bg-brand-forestDeep text-brand-gold font-semibold text-sm transition-all shadow-sm disabled:opacity-50"
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition ${
+                    selectedCategory === cat
+                      ? 'bg-[#063B27] text-[#C6922E] shadow'
+                      : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                  }`}
                 >
-                  {submitting ? 'Verifying...' : 'Continue to Menu →'}
+                  {cat}
                 </button>
-              </form>
+              ))}
+            </div>
+
+            {/* Menu Items List */}
+            {loadingMenu ? (
+              <div className="text-center py-12 text-gray-500 text-xs">Loading delicious dishes...</div>
+            ) : filteredItems.length === 0 ? (
+              <div className="text-center py-12 bg-white rounded-xl border border-gray-200 text-xs text-gray-500">
+                No items found matching your search.
+              </div>
             ) : (
-              <div className="text-center py-4">
-                <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-3">
-                  ✓
-                </div>
-                <h3 className="font-serif font-bold text-lg text-brand-forest">
-                  Welcome, {customer.fullName}!
-                </h3>
-                <p className="text-xs text-kathaText-muted mb-4">
-                  Mobile: {customer.mobileE164}
-                </p>
-                <div className="p-3 bg-brand-gold/10 border border-brand-gold/30 rounded-lg text-xs text-brand-forestDeep font-medium">
-                  Ready to browse menu and add dishes to your cart (Phase 5).
-                </div>
+              <div className="space-y-2.5">
+                {filteredItems.map((item) => {
+                  const inCart = cart.find((c) => c.menuItemId === item.id);
+                  return (
+                    <div
+                      key={item.id}
+                      className="bg-white p-3.5 rounded-xl border border-gray-200 flex items-center justify-between gap-3 shadow-sm hover:border-[#063B27]/40 transition"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-3 h-3 border border-emerald-600 flex items-center justify-center rounded-sm">
+                            <span className="w-1.5 h-1.5 bg-emerald-600 rounded-full"></span>
+                          </span>
+                          <h4 className="font-semibold text-xs text-gray-900">{item.name}</h4>
+                        </div>
+                        {item.description && (
+                          <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-1">{item.description}</p>
+                        )}
+                        <p className="font-serif font-bold text-sm text-[#063B27] mt-1">₹{item.priceInr}</p>
+                      </div>
+
+                      <div>
+                        {inCart ? (
+                          <div className="flex items-center gap-2 bg-[#063B27]/10 px-2 py-1 rounded-lg">
+                            <button
+                              onClick={() => updateQuantity(item.id, -1)}
+                              className="w-6 h-6 rounded bg-white text-[#063B27] font-bold text-sm flex items-center justify-center shadow-sm"
+                            >
+                              -
+                            </button>
+                            <span className="font-bold text-xs text-[#063B27] min-w-[12px] text-center">
+                              {inCart.quantity}
+                            </span>
+                            <button
+                              onClick={() => updateQuantity(item.id, 1)}
+                              className="w-6 h-6 rounded bg-[#063B27] text-white font-bold text-sm flex items-center justify-center shadow-sm"
+                            >
+                              +
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => addToCart(item)}
+                            disabled={!item.isAvailable}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                              item.isAvailable
+                                ? 'bg-[#063B27] text-[#C6922E] hover:bg-[#084d33] shadow-sm'
+                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            }`}
+                          >
+                            {item.isAvailable ? '+ Add' : 'Out'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
         )}
-      </div>
 
-      <div className="text-center text-[11px] text-kathaText-muted py-4">
-        Katha Cafe • B-82A Ganga Jamuna Colony, Murlipura, Jaipur
-      </div>
+        {/* Step 3: Placed Order & Live Status Tracker */}
+        {placedOrder && (
+          <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-md space-y-5 my-4">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-green-100 text-green-700 rounded-full flex items-center justify-center mx-auto mb-2 text-2xl font-bold">
+                ✓
+              </div>
+              <h2 className="font-serif font-bold text-xl text-[#063B27]">Order Sent to Kitchen!</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Order #{placedOrder.orderNumber}</p>
+            </div>
+
+            {/* Live Status Badge */}
+            <div className="bg-gray-50 p-4 rounded-xl border text-center space-y-2">
+              <span className="text-[11px] uppercase tracking-wider text-gray-500 font-bold block">Current Status</span>
+              <div className="inline-block">
+                {placedOrder.status === 'SUBMITTED' && (
+                  <span className="bg-amber-100 text-amber-800 font-bold px-3 py-1 rounded-full text-xs animate-pulse border border-amber-300">
+                    ⏳ Waiting for Cashier Confirmation
+                  </span>
+                )}
+                {placedOrder.status === 'ACCEPTED' && (
+                  <span className="bg-sky-100 text-sky-800 font-bold px-3 py-1 rounded-full text-xs border border-sky-300">
+                    👨‍🍳 Order Accepted & Queued
+                  </span>
+                )}
+                {placedOrder.status === 'PREPARING' && (
+                  <span className="bg-orange-100 text-orange-800 font-bold px-3 py-1 rounded-full text-xs animate-pulse border border-orange-300">
+                    🔥 Chefs are Preparing Your Food
+                  </span>
+                )}
+                {placedOrder.status === 'READY' && (
+                  <span className="bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-full text-xs border border-emerald-300">
+                    🔔 Order is Ready!
+                  </span>
+                )}
+                {placedOrder.status === 'SERVED' && (
+                  <span className="bg-green-100 text-green-800 font-bold px-3 py-1 rounded-full text-xs border border-green-300">
+                    ✨ Served! Enjoy Your Meal
+                  </span>
+                )}
+                {placedOrder.status === 'CLOSED' && (
+                  <span className="bg-gray-200 text-gray-800 font-bold px-3 py-1 rounded-full text-xs">
+                    🏁 Bill Settled & Closed
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] text-gray-400">Status updates automatically as your food is prepared.</p>
+            </div>
+
+            {/* Summary */}
+            <div className="divide-y divide-gray-100 text-xs border-t pt-3">
+              <p className="font-semibold text-gray-700 pb-2">Your Items:</p>
+              {placedOrder.items.map((item, i) => (
+                <div key={i} className="py-1.5 flex justify-between">
+                  <span>
+                    <strong>{item.quantity}x</strong> {item.name}
+                  </span>
+                  <span className="font-mono">₹{item.unitPriceInr * item.quantity}</span>
+                </div>
+              ))}
+              <div className="pt-3 flex justify-between font-bold text-sm text-[#063B27]">
+                <span>Total Amount:</span>
+                <span className="font-serif">₹{placedOrder.totalInr}</span>
+              </div>
+            </div>
+
+            <div className="pt-2 text-center">
+              <button
+                onClick={() => setPlacedOrder(null)}
+                className="text-xs text-[#063B27] font-semibold underline underline-offset-2"
+              >
+                + Add More Items to Table
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Floating Cart Bottom Bar */}
+        {cart.length > 0 && !placedOrder && (
+          <div className="fixed bottom-0 inset-x-0 p-3 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-xl z-30">
+            <div className="max-w-xl mx-auto flex items-center justify-between gap-4">
+              <div>
+                <span className="text-[11px] text-gray-500 font-semibold block">
+                  {cartItemCount} {cartItemCount === 1 ? 'item' : 'items'} in cart
+                </span>
+                <span className="font-serif font-bold text-lg text-[#063B27]">₹{cartTotal}</span>
+              </div>
+
+              <button
+                onClick={() => setShowCartModal(true)}
+                className="flex-1 max-w-[200px] bg-[#063B27] hover:bg-[#084d33] text-[#C6922E] font-bold text-xs py-3 px-4 rounded-xl shadow-md transition flex items-center justify-center gap-1.5"
+              >
+                <span>View Cart & Order</span>
+                <span>→</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Cart Review & Place Order Modal */}
+        {showCartModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <div className="bg-white rounded-t-2xl sm:rounded-2xl max-w-md w-full p-5 max-h-[85vh] flex flex-col shadow-2xl">
+              <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                <div>
+                  <h3 className="font-serif text-lg font-bold text-[#063B27]">Your Table Cart</h3>
+                  <p className="text-xs text-gray-500">Table: {tableInfo?.tableLabel}</p>
+                </div>
+                <button
+                  onClick={() => setShowCartModal(false)}
+                  className="w-7 h-7 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-sm font-bold"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {orderError && (
+                <div className="my-2 p-2.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg">
+                  {orderError}
+                </div>
+              )}
+
+              {/* Items in Cart */}
+              <div className="flex-1 overflow-y-auto py-3 space-y-3 divide-y divide-gray-50">
+                {cart.map((item) => (
+                  <div key={item.menuItemId} className="pt-2 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-gray-900">{item.name}</p>
+                      <p className="text-[11px] text-gray-500 font-mono">₹{item.unitPriceInr} each</p>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-gray-100 px-2 py-1 rounded-lg">
+                      <button
+                        onClick={() => updateQuantity(item.menuItemId, -1)}
+                        className="w-5 h-5 rounded bg-white text-gray-800 font-bold text-xs flex items-center justify-center shadow-sm"
+                      >
+                        -
+                      </button>
+                      <span className="font-bold text-xs text-gray-800 min-w-[14px] text-center">
+                        {item.quantity}
+                      </span>
+                      <button
+                        onClick={() => updateQuantity(item.menuItemId, 1)}
+                        className="w-5 h-5 rounded bg-[#063B27] text-white font-bold text-xs flex items-center justify-center shadow-sm"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Order Notes */}
+              <div className="py-2 border-t border-gray-100">
+                <label className="text-[11px] font-semibold text-gray-600 block mb-1">
+                  Cooking instructions or special notes (optional):
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Less sugar in chai, extra crispy sandwich..."
+                  value={orderNotes}
+                  onChange={(e) => setOrderNotes(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-[#063B27]"
+                />
+              </div>
+
+              {/* Cart Footer */}
+              <div className="pt-3 border-t border-gray-100 space-y-3">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-600 font-medium">Total Bill:</span>
+                  <span className="font-serif font-bold text-lg text-[#063B27]">₹{cartTotal}</span>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowCartModal(false)}
+                    className="px-4 py-2.5 border rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-50"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={handlePlaceOrder}
+                    disabled={submittingOrder}
+                    className="flex-1 bg-[#063B27] hover:bg-[#084d33] text-[#C6922E] font-bold text-xs py-2.5 rounded-xl transition shadow disabled:opacity-50"
+                  >
+                    {submittingOrder ? 'Placing Order...' : `Confirm & Send to Kitchen (₹${cartTotal}) →`}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
 
 export default function OrderPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-kathaText-muted">Loading table...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading table session...</div>}>
       <OrderContent />
     </Suspense>
   );
