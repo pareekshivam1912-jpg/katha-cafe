@@ -525,51 +525,53 @@ export default function AdminPage() {
                   No inventory items tracked yet. Click &quot;+ Add Item&quot; to begin.
                 </div>
               ) : (
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-[#063B27]/5 border-b border-gray-200 text-gray-700 font-bold uppercase tracking-wider">
-                    <tr>
-                      <th className="p-3">Item Name</th>
-                      <th className="p-3">Quantity</th>
-                      <th className="p-3">Unit</th>
-                      <th className="p-3">Reorder Threshold</th>
-                      <th className="p-3">Status</th>
-                      <th className="p-3 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {inventoryItems.map((item) => (
-                      <tr key={item.id} className="hover:bg-gray-50">
-                        <td className="p-3 font-semibold text-gray-900">{item.name}</td>
-                        <td className="p-3 font-mono font-bold text-sm text-[#063B27]">{item.quantity}</td>
-                        <td className="p-3 text-gray-600">{item.unit}</td>
-                        <td className="p-3 text-gray-500">{item.reorderLevel !== null ? `${item.reorderLevel} ${item.unit}` : '—'}</td>
-                        <td className="p-3">
-                          {item.isLowStock ? (
-                            <span className="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded text-[11px]">
-                              ⚠️ Low Stock
-                            </span>
-                          ) : (
-                            <span className="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[11px]">
-                              In Stock
-                            </span>
-                          )}
-                        </td>
-                        <td className="p-3 text-right">
-                          <button
-                            onClick={() => {
-                              setAdjustingItem(item);
-                              setAdjDelta('');
-                              setAdjReason('');
-                            }}
-                            className="bg-[#C6922E] hover:bg-[#b58326] text-[#063B27] font-bold px-2.5 py-1 rounded text-xs transition"
-                          >
-                            Adjust Stock
-                          </button>
-                        </td>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs min-w-[500px]">
+                    <thead className="bg-[#063B27]/5 border-b border-gray-200 text-gray-700 font-bold uppercase tracking-wider">
+                      <tr>
+                        <th className="p-3">Item Name</th>
+                        <th className="p-3">Quantity</th>
+                        <th className="p-3">Unit</th>
+                        <th className="p-3">Reorder Threshold</th>
+                        <th className="p-3">Status</th>
+                        <th className="p-3 text-right">Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {inventoryItems.map((item) => (
+                        <tr key={item.id} className="hover:bg-gray-50">
+                          <td className="p-3 font-semibold text-gray-900">{item.name}</td>
+                          <td className="p-3 font-mono font-bold text-sm text-[#063B27]">{item.quantity}</td>
+                          <td className="p-3 text-gray-600">{item.unit}</td>
+                          <td className="p-3 text-gray-500">{item.reorderLevel !== null ? `${item.reorderLevel} ${item.unit}` : '—'}</td>
+                          <td className="p-3">
+                            {item.isLowStock ? (
+                              <span className="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded text-[11px]">
+                                ⚠️ Low Stock
+                              </span>
+                            ) : (
+                              <span className="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[11px]">
+                                In Stock
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3 text-right">
+                            <button
+                              onClick={() => {
+                                setAdjustingItem(item);
+                                setAdjDelta('');
+                                setAdjReason('');
+                              }}
+                              className="bg-[#C6922E] hover:bg-[#b58326] text-[#063B27] font-bold px-2.5 py-1 rounded text-xs transition"
+                            >
+                              Adjust Stock
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </div>
@@ -666,24 +668,26 @@ export default function AdminPage() {
               {productMix.length === 0 ? (
                 <div className="p-8 text-center text-gray-400 text-xs">No sales recorded yet.</div>
               ) : (
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-[#063B27]/5 border-b border-gray-200 text-gray-700 font-bold uppercase tracking-wider">
-                    <tr>
-                      <th className="p-3">Item Name</th>
-                      <th className="p-3">Quantity Sold</th>
-                      <th className="p-3">Revenue Generated</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {productMix.map((item, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50">
-                        <td className="p-3 font-semibold text-gray-900">{item.name}</td>
-                        <td className="p-3 font-bold text-gray-800">{item.quantitySold} units</td>
-                        <td className="p-3 font-serif font-bold text-[#063B27]">₹{item.revenueInr}</td>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs min-w-[400px]">
+                    <thead className="bg-[#063B27]/5 border-b border-gray-200 text-gray-700 font-bold uppercase tracking-wider">
+                      <tr>
+                        <th className="p-3">Item Name</th>
+                        <th className="p-3">Quantity Sold</th>
+                        <th className="p-3">Revenue Generated</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {productMix.map((item, idx) => (
+                        <tr key={idx} className="hover:bg-gray-50">
+                          <td className="p-3 font-semibold text-gray-900">{item.name}</td>
+                          <td className="p-3 font-bold text-gray-800">{item.quantitySold} units</td>
+                          <td className="p-3 font-serif font-bold text-[#063B27]">₹{item.revenueInr}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </div>
