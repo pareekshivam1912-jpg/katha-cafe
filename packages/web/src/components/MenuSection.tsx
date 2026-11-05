@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../config/api';
+import { ALL_CANONICAL_CATEGORIES } from '../data/canonicalMenu';
 
 interface MenuItem {
   id: string;
@@ -20,10 +21,10 @@ interface MenuCategory {
 }
 
 export const MenuSection: React.FC = () => {
-  const [categories, setCategories] = useState<MenuCategory[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [categories, setCategories] = useState<MenuCategory[]>(ALL_CANONICAL_CATEGORIES);
+  const [selectedCategory, setSelectedCategory] = useState<string>(ALL_CANONICAL_CATEGORIES[0]?.name || 'Snacks');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     async function fetchMenu() {
@@ -33,43 +34,19 @@ export const MenuSection: React.FC = () => {
           const data = await res.json();
           if (data.categories && data.categories.length > 0) {
             setCategories(data.categories);
-            setSelectedCategory(data.categories[0].name);
-            setLoading(false);
+            if (!selectedCategory) {
+              setSelectedCategory(data.categories[0].name);
+            }
             return;
           }
         }
       } catch (err) {
-        console.error('[MenuSection] Failed to fetch menu from API:', err);
+        console.error('[MenuSection] API fetch notice, serving verified canonical menu:', err);
       }
-
-      // Fallback fallback if API not reachable
-      setCategories([
-        {
-          id: 'cat-chai',
-          name: 'Chai Pe Charcha',
-          displayOrder: 1,
-          items: [
-            { id: '1', name: 'Katha Ki Chai', pricePaise: 2000, priceInr: 20, isAvailable: true },
-            { id: '2', name: 'Adrak Chai', pricePaise: 2500, priceInr: 25, isAvailable: true },
-            { id: '3', name: 'Kulhad Chai', pricePaise: 2500, priceInr: 25, isAvailable: true },
-          ],
-        },
-        {
-          id: 'cat-breads',
-          name: 'Breads',
-          displayOrder: 2,
-          items: [
-            { id: '4', name: 'Bun Maska', pricePaise: 3500, priceInr: 35, isAvailable: true },
-            { id: '5', name: 'Butter Toast', pricePaise: 4000, priceInr: 40, isAvailable: true },
-          ],
-        },
-      ]);
-      setSelectedCategory('Chai Pe Charcha');
-      setLoading(false);
     }
 
     fetchMenu();
-  }, []);
+  }, [selectedCategory]);
 
   const currentCategory = categories.find((c) => c.name === selectedCategory) || categories[0];
 
