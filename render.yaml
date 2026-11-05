@@ -14,11 +14,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: CLIENT_URL
-        fromService:
-          type: web
-          name: katha-cafe-web
-          property: host
-          format: https://{host}
+        value: "*"
       - key: SESSION_SECRET
         generateValue: true
       - key: USE_PGLITE
