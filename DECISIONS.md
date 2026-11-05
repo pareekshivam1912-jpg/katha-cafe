@@ -122,4 +122,16 @@ Record every material technical/product decision here.
 - **Reason:** Fulfills PRD Section 4.5 & 4.6, guarantees clear segregation between customer orders, cashier review, and kitchen fulfillment, and prevents orphaned or skipped kitchen tickets.
 - **Status:** Accepted and verified in Phase 6.
 
+## D-015 — Counter payment recording, idempotency enforcement, and partial unique constraint
+- **Decision:**
+  1. **Counter-Only Settlement Scope:** In adherence to the zero-cost/free baseline, no paid payment gateways (Razorpay, Paytm, Stripe) or bank subscriptions are integrated. Payments are verified in person by authorized staff (`CASHIER`, `MANAGER`, `ADMIN`) via `CASH`, `UPI_AT_COUNTER` (cashier verifies customer's UPI app payment to cafe's QR standee and optionally records UTR reference), or `CARD_AT_COUNTER`.
+  2. **Partial Unique Constraint Protection:** Database partial unique index `idx_payments_order_paid` (`UNIQUE (order_id) WHERE status = 'PAID'`) strictly prevents double-billing and concurrent multi-tab race conditions. Only at most ONE successful `PAID` record can exist per order.
+  3. **Payment Idempotency:** Submissions require an `idempotencyKey`. Retrying with the same key returns the existing settlement receipt (`200 OK` with `isExisting: true`). Submitting a new payment attempt for an already paid order returns `409 Conflict` (`OrderAlreadyPaid`).
+  4. **Server-Authoritative Settlement:** The server alone transitions payments to `PAID` upon staff verification, updates the order status to `CLOSED`, and logs the settlement event in `order_status_history`. Underpayments are strictly rejected.
+  5. **UI Protection:** The cashier settlement action immediately disables upon first click (`isProcessingPayment = true`), preventing accidental double submissions.
+- **Dependencies Added:** None (uses existing database layer and Express routes).
+- **Reason:** Fulfills PRD Section 4.7, eliminates double-charging risks without third-party fees, and guarantees accounting reconciliation integrity.
+- **Status:** Accepted and verified in Phase 7.
+
+
 

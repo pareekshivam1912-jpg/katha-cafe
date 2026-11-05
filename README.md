@@ -25,7 +25,8 @@ This repository documentation defines the Katha Cafe website, QR table ordering,
 - **Phase 4 (Tables, QR codes and customer details):** Done. Opaque 32-byte table tokens, SHA-256 hash lookup in database, zero token/ID leakage, 10-digit Indian mobile validation with E.164 normalization, session closure enforcement, and Next.js customer ordering entry page (`/order`). All 30 workspace tests passing.
 - **Phase 5 (QR cart ordering and order lifecycle):** Done. Server-authoritative price recalculation, order placement idempotency (`orders.idempotency_key`), transactional line item snapshotting, and public status token SHA-256 hash lookup (`/api/orders/:publicToken/status`). All 31 workspace tests passing.
 - **Phase 6 (POS and Kitchen Display System):** Done. Staff POS order creation (`/api/pos/orders`), Cashier incoming QR order review & accept/reject (`/api/pos/orders/pending`), Kitchen Display System queue (`/api/kds/orders`), linear state machine progression (`ACCEPTED` -> `PREPARING` -> `READY` -> `SERVED`), and Next.js `/pos` and `/kds` responsive web interfaces. All 45 workspace tests passing.
-- **Phases 7–9:** Todo. Blocked pending sequential approval.
+- **Phase 7 (Counter Payment Recording & Reconciliation):** Done. Counter payment recording (`/api/pos/orders/:id/payments`) supporting `CASH`, `UPI_AT_COUNTER`, and `CARD_AT_COUNTER`, partial unique index constraint (`idx_payments_order_paid`), idempotency deduplication, underpayment prevention, and Cashier settlement UI. All 55 workspace tests passing.
+- **Phases 8–9:** Todo. Blocked pending sequential approval.
 
 ## Local development instructions
 

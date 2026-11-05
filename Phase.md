@@ -67,14 +67,14 @@
 - [x] Phase commit created.
 
 ## Phase 7 — Payments
-- [ ] Counter-only payment recording scope confirmed.
-- [ ] Idempotency key required.
-- [ ] Pay/confirm control disables after first click.
-- [ ] Unique successful payment constraint tested.
-- [ ] Server alone sets PAID.
-- [ ] Double click, retry, refresh, back button and two tabs tested.
-- [ ] No real-money gateway integration.
-- [ ] Phase commit created.
+- [x] Counter-only payment recording scope confirmed.
+- [x] Idempotency key required.
+- [x] Pay/confirm control disables after first click.
+- [x] Unique successful payment constraint tested.
+- [x] Server alone sets PAID.
+- [x] Double click, retry, refresh, back button and two tabs tested.
+- [x] No real-money gateway integration.
+- [x] Phase commit created.
 
 ## Phase 8 — Inventory/reports
 - [ ] Stock movement audit works.

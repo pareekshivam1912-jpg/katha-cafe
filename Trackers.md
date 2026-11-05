@@ -18,7 +18,7 @@ Update this file as work proceeds. Do not mark an item complete without evidence
 | DEV-04 | 4 | Table QR/customer details | Done | Opaque tokens, SHA-256 hash, phone validation, Next.js /order page |
 | DEV-05 | 5 | QR ordering | Done | Server recalculation, idempotency, transactional snapshotting, orders.test.ts passing |
 | DEV-06 | 6 | POS/KDS | Done | POS order creation, QR order review & acceptance, KDS queue & linear progression, pos-kds.test.ts passing |
-| DEV-07 | 7 | Counter payment recording | Todo | No gateway |
+| DEV-07 | 7 | Counter payment recording | Done | Counter payment recording, idempotency, partial unique index, payments.test.ts passing |
 | DEV-08 | 8 | Inventory/reports | Todo | Recipe data pending |
 | DEV-09 | 9 | Hardening/release | Todo | Hosting decision pending |
 
@@ -34,7 +34,7 @@ See `DECISIONS.md`. Add date, decision, alternatives, cost/license check and app
 | R-02 | Tax/GST treatment not confirmed | Incorrect totals/receipts | Do not hardcode tax; confirm with owner/accountant | Open |
 | R-03 | Bank has no free server verification API | Cannot automate online UPI confirmation | Counter verification, mock flow or approved bank route | Open |
 | R-04 | Free hosting requires card or can bill | Unexpected charge | Local-first; verify terms before selection | Open |
-| R-05 | Duplicate order/payment retries | Double billing | Idempotency keys, transactions and unique constraints | Planned |
+| R-05 | Duplicate order/payment retries | Double billing | Idempotency keys, transactions and unique constraints | Resolved (Order & payment idempotency and partial unique index verified) |
 | R-06 | Customer phone number exposure | Privacy harm | Least privilege, limited retention, no telemetry | Planned |
 | R-07 | Recipes not supplied | Incorrect stock deduction | No automated ingredient deduction until approved | Open |
 
@@ -47,10 +47,10 @@ See `DECISIONS.md`. Add date, decision, alternatives, cost/license check and app
 | T-03 | Menu | Item disabled after cart load | Server rejects stale item | Done |
 | T-04 | Orders | Double submit | One order only | Done |
 | T-05 | Orders | Refresh after submit | Existing order recovered | Done |
-| T-06 | Payments | Double click | One payment attempt/success | Todo |
-| T-07 | Payments | Retry same idempotency key | Same attempt returned | Todo |
-| T-08 | Payments | Two tabs race | At most one PAID record | Todo |
-| T-09 | Payments | Client claims success | Server remains non-paid until verified | Todo |
+| T-06 | Payments | Double click | One payment attempt/success | Done |
+| T-07 | Payments | Retry same idempotency key | Same attempt returned | Done |
+| T-08 | Payments | Two tabs race | At most one PAID record | Done |
+| T-09 | Payments | Client claims success | Server remains non-paid until verified | Done |
 | T-10 | Roles | Kitchen accesses admin route | Forbidden | Done |
 | T-11 | KDS | Reconnect | No duplicate ticket | Done |
 | T-12 | Backup | Restore backup | Data restored in test database | Todo |
@@ -67,3 +67,4 @@ See `DECISIONS.md`. Add date, decision, alternatives, cost/license check and app
 | 2026-11-05 | 4 | Opaque QR tokens, SHA-256 hashing, session lifecycle, phone validation, Next.js /order page | Test execution & build |
 | 2026-11-05 | 5 | Server price recalculation, order idempotency, transactional line items, status token lookup | Test execution & build |
 | 2026-11-05 | 6 | Cashier POS order entry, QR order review & acceptance, KDS queue & linear progression, web UI | Test execution & build |
+| 2026-11-05 | 7 | Counter payment recording, idempotency, partial unique index, double-click protection, web UI | Test execution & build |
