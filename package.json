@@ -9,13 +9,17 @@
   "scripts": {
     "dev": "npm --workspace=@katha-cafe/api run dev",
     "build": "npm --workspace=@katha-cafe/db run build && npm --workspace=@katha-cafe/api run build",
+    "build:web": "npm --workspace=@katha-cafe/web run build",
     "test": "npm --workspace=@katha-cafe/db run test && npm --workspace=@katha-cafe/api run test",
     "migrate": "npm --workspace=@katha-cafe/db run migrate",
     "seed": "npm --workspace=@katha-cafe/db run seed",
     "start": "npm --workspace=@katha-cafe/api run start"
   },
+  "dependencies": {
+    "typescript": "5.8.2"
+  },
   "engines": {
-    "node": ">=20.0.0"
+    "node": "20.x"
   },
   "license": "MIT"
 }
