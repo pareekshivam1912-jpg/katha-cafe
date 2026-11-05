@@ -13,7 +13,7 @@ Update this file as work proceeds. Do not mark an item complete without evidence
 | DOC-05 | 0 | Transcribe menu and prices | Done with discrepancies | `menu.md` |
 | DOC-06 | 0 | Define phases and rules | Done | `Phase.md`, `rules.md` |
 | DEV-01 | 1 | Inspect/create repository foundation | Done | Git repo, npm workspaces, health endpoint, tests passing |
-| DEV-02 | 2 | Implement schema/auth | Todo | Blocked by Phase 1 |
+| DEV-02 | 2 | Implement schema/auth | Done | Migration 001, dual-mode client, scrypt auth, RBAC tests passing |
 | DEV-03 | 3 | Menu/public website | Todo | Confirm prices first |
 | DEV-04 | 4 | Table QR/customer details | Todo | — |
 | DEV-05 | 5 | QR ordering | Todo | — |
@@ -51,7 +51,7 @@ See `DECISIONS.md`. Add date, decision, alternatives, cost/license check and app
 | T-07 | Payments | Retry same idempotency key | Same attempt returned | Todo |
 | T-08 | Payments | Two tabs race | At most one PAID record | Todo |
 | T-09 | Payments | Client claims success | Server remains non-paid until verified | Todo |
-| T-10 | Roles | Kitchen accesses admin route | Forbidden | Todo |
+| T-10 | Roles | Kitchen accesses admin route | Forbidden | Done |
 | T-11 | KDS | Reconnect | No duplicate ticket | Todo |
 | T-12 | Backup | Restore backup | Data restored in test database | Todo |
 

@@ -2,10 +2,29 @@
   "name": "@katha-cafe/db",
   "version": "0.1.0",
   "private": true,
-  "description": "Katha Cafe - Relational PostgreSQL schema, migrations, and seed scripts",
+  "type": "module",
+  "description": "Katha Cafe - Relational PostgreSQL schema, dual-mode PGlite/pg client, and migrations",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "migrate": "echo \"@katha-cafe/db migrations will be implemented in Phase 2\"",
-    "test": "echo \"@katha-cafe/db tests will be added in Phase 2\""
+    "build": "tsc && node -e \"import('node:fs').then(fs => fs.cpSync('src/migrations', 'dist/migrations', {recursive: true}))\"",
+    "migrate": "tsx src/migrate.ts",
+    "seed": "tsx src/seed.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "0.2.16",
+    "pg": "8.13.3"
+  },
+  "devDependencies": {
+    "@types/node": "22.13.9",
+    "@types/pg": "8.11.11",
+    "typescript": "5.8.2",
+    "vitest": "3.0.7",
+    "tsx": "4.19.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   },
   "license": "MIT"
 }

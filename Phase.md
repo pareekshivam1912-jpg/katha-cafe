@@ -28,12 +28,12 @@
 - [x] Phase commit created.
 
 ## Phase 2 — Database/auth
-- [ ] Approved migrations apply cleanly.
-- [ ] MOCK seed data labelled.
-- [ ] Login and logout tested.
-- [ ] Role authorization tested.
-- [ ] No secrets committed.
-- [ ] Phase commit created.
+- [x] Approved migrations apply cleanly.
+- [x] MOCK seed data labelled.
+- [x] Login and logout tested.
+- [x] Role authorization tested.
+- [x] No secrets committed.
+- [x] Phase commit created.
 
 ## Phase 3 — Menu/public site
 - [ ] Owner confirms authoritative menu prices.

@@ -8,6 +8,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   CLIENT_URL: z.string().default('http://localhost:3000'),
   DATABASE_URL: z.string().optional(),
+  SESSION_SECRET: z.string().default('katha-cafe-local-dev-secret-key-at-least-32-chars-long!'),
 });
 
 const parsed = envSchema.safeParse(process.env);

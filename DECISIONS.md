@@ -60,3 +60,16 @@ Record every material technical/product decision here.
   - `tsx`: 4.19.3 (License: MIT) — TypeScript execution without precompilation.
 - **Reason:** User confirmed monorepo structure; all tools are free, open source, and locally executable with no cloud accounts or billing.
 - **Status:** Accepted and verified in Phase 1.
+
+## D-010 — Dual-mode database client and scrypt password hashing
+- **Decision:**
+  1. **Dual-mode PostgreSQL:** In local/test environments where no live PostgreSQL service is running, use embedded PGlite (`@electric-sql/pglite` 0.2.16, Apache-2.0). When `DATABASE_URL` is configured to a PostgreSQL instance, connect via `pg` (8.13.3, MIT).
+  2. **Password Hashing:** Use Node.js built-in `crypto.scrypt` with 16-byte random salt, 64-byte key length, and constant-time comparison via `crypto.timingSafeEqual`. Zero native C++ compilation issues on Windows, NIST-approved, zero external dependencies.
+  3. **Staff Sessions:** Stateful DB-backed authentication with HMAC-SHA256 signed session tokens stored in HttpOnly, SameSite cookies or `Authorization: Bearer` header.
+  4. **RBAC:** Enforced strictly on server through `requireAuth` and `requireRole` middleware.
+- **Dependencies Added:**
+  - `@electric-sql/pglite`: 0.2.16 (License: Apache-2.0) — embedded WASM PostgreSQL engine.
+  - `pg`: 8.13.3 (License: MIT) — standard PostgreSQL client.
+  - `cookie-parser`: 1.4.7 (License: MIT) — parse HTTP cookies.
+- **Reason:** Confirmed by user; enables full offline, zero-card, local-first development while preserving PostgreSQL schema fidelity and constraints.
+- **Status:** Accepted and verified in Phase 2.

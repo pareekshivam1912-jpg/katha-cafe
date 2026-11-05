@@ -1,7 +1,9 @@
 import express, { Express } from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { env } from './config/env.js';
 import { healthRouter } from './routes/health.js';
+import { authRouter } from './routes/auth.js';
 
 export function createApp(): Express {
   const app = express();
@@ -12,10 +14,12 @@ export function createApp(): Express {
       credentials: true,
     })
   );
+  app.use(cookieParser());
   app.use(express.json());
 
   // Mount API routes
   app.use('/api', healthRouter);
+  app.use('/api', authRouter);
 
   // 404 handler
   app.use((_req, res) => {

@@ -20,7 +20,8 @@ This repository documentation defines the Katha Cafe website, QR table ordering,
 
 - **Phase 0 (Documentation baseline):** Done.
 - **Phase 1 (Repository and local development foundation):** Done. Git repository initialized, npm workspaces monorepo configured, pinned dependencies installed from lockfile, TypeScript built, health endpoint and tests verified.
-- **Phases 2–9:** Todo. Blocked pending sequential approval.
+- **Phase 2 (Database and authentication):** Done. PostgreSQL schema migrations (`001_initial_schema.sql`), dual-mode PGlite/pg client, scrypt password hashing, MOCK staff accounts, and RBAC auth routes (`/api/auth/login`, `/api/auth/me`, `/api/auth/logout`) implemented and verified (19/19 tests passing).
+- **Phases 3–9:** Todo. Blocked pending sequential approval.
 
 ## Local development instructions
 
