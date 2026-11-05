@@ -98,3 +98,15 @@ Record every material technical/product decision here.
   - `qrcode`: 1.5.4 (License: MIT) — local QR code generation.
 - **Reason:** Enforces customer privacy, prevents cross-table tampering, and satisfies PRD Section 4.3.
 - **Status:** Accepted and verified in Phase 4.
+
+## D-013 — Idempotent QR order placement, server recalculation, transactional snapshotting, and public status token hash
+- **Decision:**
+  1. **Server-authoritative Price Recalculation:** Client submissions contain only `itemId`, `quantity`, and optional `notes`. Client prices are never trusted or accepted. The server fetches active database menu items, validates availability (`is_available = TRUE`), calculates `unit_price_paise * quantity`, and computes item subtotal, tax (0 paise pending tax policy confirmation), and total paise.
+  2. **Transactional Order Snapshotting:** Each order and its line items are inserted within an explicit database transaction (`BEGIN` ... `COMMIT`). Line items snapshot `item_name`, `unit_price_paise`, `quantity`, and `subtotal_paise` at the exact moment of order placement, insulating historical receipts against future menu price modifications.
+  3. **Order Placement Idempotency:** Submissions accept an optional `idempotencyKey`. A unique column `orders.idempotency_key` guarantees that network retries or double submits return the existing order record (`200 OK` with `isRetry: true`) rather than generating duplicate orders.
+  4. **Public Order Status Token:** Orders receive a 32-byte cryptographically secure random public status token (`status_token`). Only its SHA-256 hash is persisted in `orders.status_token_hash`. Customers poll or retrieve order status using the plain token via `GET /api/orders/:publicToken/status` without exposing internal database UUIDs or customer PII.
+  5. **Session Integrity:** Orders require an active, open table session (`table_sessions.status = 'ACTIVE'`). Attempting to submit orders to closed sessions returns a strict 400 rejection.
+- **Dependencies Added:** None (uses Node.js built-in `crypto` and existing database layer).
+- **Reason:** Satisfies PRD Section 4.4, prevents fraudulent pricing or duplicate kitchen ticket spam, and guarantees customer order recovery.
+- **Status:** Accepted and verified in Phase 5.
+

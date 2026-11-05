@@ -6,6 +6,7 @@ import { healthRouter } from './routes/health.js';
 import { authRouter } from './routes/auth.js';
 import { menuRouter } from './routes/menu.js';
 import { tablesRouter } from './routes/tables.js';
+import { ordersRouter } from './routes/orders.js';
 
 export function createApp(): Express {
   const app = express();
@@ -24,6 +25,7 @@ export function createApp(): Express {
   app.use('/api', authRouter);
   app.use('/api', menuRouter);
   app.use('/api', tablesRouter);
+  app.use('/api', ordersRouter);
 
   // 404 handler
   app.use((_req, res) => {

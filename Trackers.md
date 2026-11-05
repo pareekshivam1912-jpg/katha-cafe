@@ -16,7 +16,7 @@ Update this file as work proceeds. Do not mark an item complete without evidence
 | DEV-02 | 2 | Implement schema/auth | Done | Migration 001, dual-mode client, scrypt auth, RBAC tests passing |
 | DEV-03 | 3 | Menu/public website | Done | Canonical menu seeded (119 items), menu API & Next.js website built |
 | DEV-04 | 4 | Table QR/customer details | Done | Opaque tokens, SHA-256 hash, phone validation, Next.js /order page |
-| DEV-05 | 5 | QR ordering | Todo | — |
+| DEV-05 | 5 | QR ordering | Done | Server recalculation, idempotency, transactional snapshotting, orders.test.ts passing |
 | DEV-06 | 6 | POS/KDS | Todo | — |
 | DEV-07 | 7 | Counter payment recording | Todo | No gateway |
 | DEV-08 | 8 | Inventory/reports | Todo | Recipe data pending |
@@ -45,8 +45,8 @@ See `DECISIONS.md`. Add date, decision, alternatives, cost/license check and app
 | T-01 | QR | Invalid token | Reject; no table/order data disclosed | Done |
 | T-02 | Customer | Invalid mobile | Validation error | Done |
 | T-03 | Menu | Item disabled after cart load | Server rejects stale item | Done |
-| T-04 | Orders | Double submit | One order only | Todo |
-| T-05 | Orders | Refresh after submit | Existing order recovered | Todo |
+| T-04 | Orders | Double submit | One order only | Done |
+| T-05 | Orders | Refresh after submit | Existing order recovered | Done |
 | T-06 | Payments | Double click | One payment attempt/success | Todo |
 | T-07 | Payments | Retry same idempotency key | Same attempt returned | Todo |
 | T-08 | Payments | Two tabs race | At most one PAID record | Todo |
@@ -60,3 +60,8 @@ See `DECISIONS.md`. Add date, decision, alternatives, cost/license check and app
 | Date | Phase | Change | Verified by |
 |---|---:|---|---|
 | 2026-11-05 | 0 | Initial documentation package generated from supplied requirements and menu screenshots | File/package verification |
+| 2026-11-05 | 1 | Monorepo initialized with npm workspaces, pinned dependencies, health API, Vitest | Test execution & build |
+| 2026-11-05 | 2 | PostgreSQL schema migrations, dual-mode client, scrypt password hashing, MOCK seed data, RBAC | Test execution & build |
+| 2026-11-05 | 3 | Canonical menu imported (23 categories, 119 items), menu CRUD, price auditing, Next.js site | Test execution & build |
+| 2026-11-05 | 4 | Opaque QR tokens, SHA-256 hashing, session lifecycle, phone validation, Next.js /order page | Test execution & build |
+| 2026-11-05 | 5 | Server price recalculation, order idempotency, transactional line items, status token lookup | Test execution & build |

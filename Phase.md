@@ -51,12 +51,12 @@
 - [x] Phase commit created.
 
 ## Phase 5 — QR orders
-- [ ] Server recalculates prices and totals.
-- [ ] Order creation is transactional.
-- [ ] Retry returns same order.
-- [ ] Duplicate submissions tested.
-- [ ] Status token access tested.
-- [ ] Phase commit created.
+- [x] Server recalculates prices and totals.
+- [x] Order creation is transactional.
+- [x] Retry returns same order.
+- [x] Duplicate submissions tested.
+- [x] Status token access tested.
+- [x] Phase commit created.
 
 ## Phase 6 — POS/KDS
 - [ ] Staff can create orders.
