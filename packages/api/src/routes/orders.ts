@@ -32,7 +32,8 @@ ordersRouter.post('/orders', async (req: Request, res: Response) => {
     return;
   }
 
-  const { sessionId, customerId, idempotencyKey, items, notes } = parse.data;
+  const { sessionId, customerId, idempotencyKey: rawKey, items, notes } = parse.data;
+  const idempotencyKey = rawKey || `qr-order-auto-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   try {
     const db = await getDb();

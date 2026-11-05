@@ -281,14 +281,17 @@ export default function PosPage() {
         orderType,
         items: cart.map((c) => ({
           menuItemId: c.menuItemId,
+          name: c.name,
           quantity: c.quantity,
           notes: c.notes,
         })),
         notes: orderNotes.trim() || undefined,
       };
 
-      if (customerName.trim() && customerMobile.trim()) {
+      if (customerName.trim()) {
         payload.customerName = customerName.trim();
+      }
+      if (customerMobile.trim()) {
         payload.customerMobile = customerMobile.replace(/[\s\-()]/g, '');
       }
 
