@@ -10,6 +10,8 @@ import { ordersRouter } from './routes/orders.js';
 import { posRouter } from './routes/pos.js';
 import { paymentsRouter } from './routes/payments.js';
 import { kdsRouter } from './routes/kds.js';
+import { inventoryRouter } from './routes/inventory.js';
+import { reportsRouter } from './routes/reports.js';
 
 export function createApp(): Express {
   const app = express();
@@ -32,6 +34,8 @@ export function createApp(): Express {
   app.use('/api/pos', posRouter);
   app.use('/api/pos', paymentsRouter);
   app.use('/api/kds', kdsRouter);
+  app.use('/api/admin', inventoryRouter);
+  app.use('/api/admin', reportsRouter);
 
   // 404 handler
   app.use((_req, res) => {

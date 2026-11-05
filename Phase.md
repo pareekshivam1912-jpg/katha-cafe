@@ -77,10 +77,10 @@
 - [x] Phase commit created.
 
 ## Phase 8 — Inventory/reports
-- [ ] Stock movement audit works.
-- [ ] No recipe deduction without approved recipes.
-- [ ] Report totals reconcile.
-- [ ] Phase commit created.
+- [x] Stock movement audit works.
+- [x] No recipe deduction without approved recipes.
+- [x] Report totals reconcile.
+- [x] Phase commit created.
 
 ## Phase 9 — Hardening/release
 - [ ] Backup and restore tested.

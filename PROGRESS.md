@@ -12,8 +12,8 @@ Last updated: 2026-11-05
 | 5 | QR ordering | done | Server recalculation, idempotency deduplication, transactional line item snapshotting, status token hash |
 | 6 | POS/KDS | done | Cashier order entry, QR order review & acceptance, KDS queue & linear state progression, audit trail |
 | 7 | Counter payment recording | done | Cash & counter UPI settlement, idempotency deduplication, partial unique index protection, audit trail |
-| 8 | Inventory/reports | todo | Blocked by Phase 7 approval |
-| 9 | Hardening/release | todo | Hosting not selected |
+| 8 | Inventory/reports | done | Stock movements audit trail, low-stock alerts, daily sales reports & reconciliation, admin web UI |
+| 9 | Hardening/release | todo | Blocked by Phase 8 approval |
 
 ## Verification evidence
 
@@ -25,3 +25,4 @@ Last updated: 2026-11-05
 - Phase 5: Server-authoritative order placement (`POST /api/orders`) implemented with zero trust for client prices. Line items transactional snapshot (`orders`, `order_items`, `order_status_history`). Idempotency key deduplication tested with identical order recovery. Unavailable item rejection and closed session rejection verified. Public 32-byte status token SHA-256 hash lookup (`GET /api/orders/:publicToken/status`) tested. All 31 workspace tests passing.
 - Phase 6: Staff POS order creation (`POST /api/pos/orders`) implemented with server recalculation and immediate `ACCEPTED` state. Cashier QR review queue (`GET /api/pos/orders/pending`), accept (`POST /api/pos/orders/:id/accept`), and reject (`POST /api/pos/orders/:id/reject`) with mandatory reason implemented. Kitchen Display System (KDS) queue (`GET /api/kds/orders`) and linear state machine (`PATCH /api/kds/orders/:id/status` advancing `ACCEPTED` -> `PREPARING` -> `READY` -> `SERVED`) implemented with financial data omission from kitchen view and audit logging in `order_status_history`. Web interfaces built for `/pos` and `/kds`. All 45 workspace tests passing.
 - Phase 7: Counter payment recording (`POST /api/pos/orders/:id/payments`) implemented supporting `CASH`, `UPI_AT_COUNTER`, and `CARD_AT_COUNTER`. Server-authoritative validation enforces full payment amount, updates order status to `CLOSED`, and writes to `order_status_history`. Enforced PostgreSQL partial unique constraint (`idx_payments_order_paid`) preventing concurrent multi-tab race conditions and double-billing. Idempotency deduplication tested. Cashier POS settlement modal and ledger UI implemented in `@katha-cafe/web`. All 55 workspace tests passing.
+- Phase 8: Inventory management (`/api/admin/inventory`) implemented with stock tracking, negative stock rejection, low-stock alerts, and manual movements audit trail in `inventory_movements` (automatic recipe deductions disabled per owner instruction). Executive sales and reconciliation reporting (`/api/admin/reports/sales/daily`, `/api/admin/reports/sales/product-mix`, `/api/admin/reports/reconciliation`) implemented with strict filtering for settled `PAID` payments. Responsive `/admin` web interface created and built. All 68 workspace tests passing.

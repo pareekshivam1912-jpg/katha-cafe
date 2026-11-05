@@ -133,5 +133,17 @@ Record every material technical/product decision here.
 - **Reason:** Fulfills PRD Section 4.7, eliminates double-charging risks without third-party fees, and guarantees accounting reconciliation integrity.
 - **Status:** Accepted and verified in Phase 7.
 
+## D-016 — Inventory stock tracking, manual adjustments audit trail, and verified-only sales reporting & reconciliation
+- **Decision:**
+  1. **Manual-Only Stock Adjustments & No Automatic Recipe Deductions:** In adherence to the owner operating constraints and Risk R-07, automatic ingredient deductions per menu item are strictly disabled until full recipe formulations are approved by the café owner. All stock movements (`PURCHASE`, `ADJUSTMENT`, `WASTE`, `RETURN`) are recorded manually by authorized managers or admins with a mandatory reason and actor auditing.
+  2. **Negative Stock Prevention:** Stock adjustments that would cause `quantity < 0` are rejected by the server with HTTP 400 `NegativeStockError`.
+  3. **Low Stock Threshold Alerting:** When an item's quantity reaches or drops below its `reorder_level`, the item is flagged with `isLowStock: true`, triggering immediate alerts on the admin dashboard.
+  4. **Strict Sales Accounting & Reconciliation:** Sales reports (`/api/admin/reports/sales/daily`, `/api/admin/reports/sales/product-mix`, `/api/admin/reports/reconciliation`) strictly query orders with `status = 'CLOSED'` that possess a verified `PAID` payment. Abandoned carts, unverified orders, and cancelled/rejected tickets are filtered out to ensure 100% accounting fidelity and bank reconciliation.
+  5. **Admin Web Dashboard:** Created responsive management screen at `/admin` in `@katha-cafe/web` with stock alert counters, item creation modal, stock adjustment drawer, and revenue breakdown widgets.
+- **Dependencies Added:** None (built with existing monorepo stack).
+- **Reason:** Fulfills PRD Sections 4.8 & 4.9, satisfies Phase 8 acceptance criteria, and guarantees stock and cash reconciliation accuracy.
+- **Status:** Accepted and verified in Phase 8.
+
+
 
 
