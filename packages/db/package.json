@@ -16,14 +16,14 @@
   },
   "dependencies": {
     "@electric-sql/pglite": "0.2.16",
+    "@types/node": "22.13.9",
+    "@types/pg": "8.11.11",
     "pg": "8.13.3",
     "typescript": "5.8.2"
   },
   "devDependencies": {
-    "@types/node": "22.13.9",
-    "@types/pg": "8.11.11",
-    "vitest": "3.0.7",
-    "tsx": "4.19.3"
+    "tsx": "4.19.3",
+    "vitest": "3.0.7"
   },
   "engines": {
     "node": "20.x"
