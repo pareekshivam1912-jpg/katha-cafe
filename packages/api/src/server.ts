@@ -10,8 +10,8 @@ async function startServer() {
 
   const app = createApp();
 
-  const server = app.listen(env.PORT, () => {
-    console.log(`[katha-cafe-api] server listening on http://localhost:${env.PORT} (${env.NODE_ENV})`);
+  const server = app.listen(env.PORT, '0.0.0.0', () => {
+    console.log(`[katha-cafe-api] server listening on http://0.0.0.0:${env.PORT} (${env.NODE_ENV})`);
   });
 
   process.on('SIGTERM', () => {
