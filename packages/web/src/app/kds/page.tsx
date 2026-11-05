@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { API_BASE_URL } from '../../config/api';
 
 interface KdsItem {
   name: string;
@@ -35,7 +36,7 @@ export default function KdsPage() {
   useEffect(() => {
     async function loginKitchenMock() {
       try {
-        const res = await fetch('http://localhost:4000/api/auth/login', {
+        const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -51,7 +52,7 @@ export default function KdsPage() {
           setError('Kitchen authentication required. Please log in.');
         }
       } catch (err) {
-        setError('Cannot reach API server at http://localhost:4000.');
+        setError(`Cannot reach API server at ${API_BASE_URL}.`);
       }
     }
 
@@ -62,7 +63,7 @@ export default function KdsPage() {
   const fetchKdsOrders = async () => {
     if (!staffToken) return;
     try {
-      const res = await fetch('http://localhost:4000/api/kds/orders', {
+      const res = await fetch(`${API_BASE_URL}/api/kds/orders`, {
         headers: { Authorization: `Bearer ${staffToken}` },
       });
       if (res.ok) {
@@ -97,7 +98,7 @@ export default function KdsPage() {
     else return;
 
     try {
-      const res = await fetch(`http://localhost:4000/api/kds/orders/${orderId}/status`, {
+      const res = await fetch(`${API_BASE_URL}/api/kds/orders/${orderId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

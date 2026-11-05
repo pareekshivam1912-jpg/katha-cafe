@@ -1,0 +1,43 @@
+# Render Blueprint Specification for Katha Cafe
+# https://render.com/docs/blueprint-spec
+
+services:
+  # 1. Katha Cafe Backend API
+  - type: web
+    name: katha-cafe-api
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm install && npm --workspace=@katha-cafe/db run build && npm --workspace=@katha-cafe/api run build
+    startCommand: node packages/api/dist/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CLIENT_URL
+        fromService:
+          type: web
+          name: katha-cafe-web
+          property: host
+          format: https://{host}
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: USE_PGLITE
+        value: "true"
+
+  # 2. Katha Cafe Frontend Web Application
+  - type: web
+    name: katha-cafe-web
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm install && npm --workspace=@katha-cafe/web run build
+    startCommand: npm --workspace=@katha-cafe/web run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: katha-cafe-api
+          property: host
+          format: https://{host}

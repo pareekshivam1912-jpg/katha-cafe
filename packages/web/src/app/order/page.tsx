@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { API_BASE_URL } from '../../config/api';
 
 interface MenuItem {
   id: string;
@@ -72,7 +73,7 @@ function OrderContent() {
 
     async function resolveTable() {
       try {
-        const res = await fetch(`http://localhost:4000/api/tables/resolve/${token}`);
+        const res = await fetch(`${API_BASE_URL}/api/tables/resolve/${token}`);
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
           setError(errData.message || 'This table QR is unavailable. Please ask staff.');
@@ -102,7 +103,7 @@ function OrderContent() {
     async function fetchMenu() {
       setLoadingMenu(true);
       try {
-        const res = await fetch('http://localhost:4000/api/menu');
+        const res = await fetch(`${API_BASE_URL}/api/menu`);
         if (res.ok) {
           const data = await res.json();
           const items: MenuItem[] = [];
@@ -141,7 +142,7 @@ function OrderContent() {
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`http://localhost:4000/api/orders/${placedOrder.publicStatusToken}/status`);
+        const res = await fetch(`${API_BASE_URL}/api/orders/${placedOrder.publicStatusToken}/status`);
         if (res.ok) {
           const data = await res.json();
           setPlacedOrder((prev) => (prev ? { ...prev, status: data.status } : null));
@@ -174,7 +175,7 @@ function OrderContent() {
 
     setSubmittingCustomer(true);
     try {
-      const res = await fetch('http://localhost:4000/api/table-sessions/identify-customer', {
+      const res = await fetch(`${API_BASE_URL}/api/table-sessions/identify-customer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -244,7 +245,7 @@ function OrderContent() {
     const idempotencyKey = `qr-order-${customer.id}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
     try {
-      const res = await fetch('http://localhost:4000/api/orders', {
+      const res = await fetch(`${API_BASE_URL}/api/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

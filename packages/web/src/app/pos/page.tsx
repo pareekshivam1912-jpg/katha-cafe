@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { API_BASE_URL } from '../../config/api';
 
 interface MenuItem {
   id: string;
@@ -99,7 +100,7 @@ export default function PosPage() {
   useEffect(() => {
     async function loginCashierMock() {
       try {
-        const res = await fetch('http://localhost:4000/api/auth/login', {
+        const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -115,7 +116,7 @@ export default function PosPage() {
           setAuthError('Staff authentication required. Please log in.');
         }
       } catch (err) {
-        setAuthError('API server unreachable at http://localhost:4000.');
+        setAuthError(`API server unreachable at ${API_BASE_URL}.`);
       }
     }
 
@@ -126,7 +127,7 @@ export default function PosPage() {
   useEffect(() => {
     async function fetchMenu() {
       try {
-        const res = await fetch('http://localhost:4000/api/menu');
+        const res = await fetch(`${API_BASE_URL}/api/menu`);
         if (res.ok) {
           const data = await res.json();
           const items: MenuItem[] = [];
@@ -157,7 +158,7 @@ export default function PosPage() {
     if (!staffToken) return;
     setLoadingPending(true);
     try {
-      const res = await fetch('http://localhost:4000/api/pos/orders/pending', {
+      const res = await fetch(`${API_BASE_URL}/api/pos/orders/pending`, {
         headers: { Authorization: `Bearer ${staffToken}` },
       });
       if (res.ok) {
@@ -176,7 +177,7 @@ export default function PosPage() {
     if (!staffToken) return;
     setLoadingPayments(true);
     try {
-      const res = await fetch('http://localhost:4000/api/pos/payments', {
+      const res = await fetch(`${API_BASE_URL}/api/pos/payments`, {
         headers: { Authorization: `Bearer ${staffToken}` },
       });
       if (res.ok) {
@@ -266,7 +267,7 @@ export default function PosPage() {
         payload.customerMobile = customerMobile.replace(/[\s\-()]/g, '');
       }
 
-      const res = await fetch('http://localhost:4000/api/pos/orders', {
+      const res = await fetch(`${API_BASE_URL}/api/pos/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -307,7 +308,7 @@ export default function PosPage() {
 
     try {
       const idempotencyKey = `pay-${settleModalOrder.id}-${Date.now()}`;
-      const res = await fetch(`http://localhost:4000/api/pos/orders/${settleModalOrder.id}/payments`, {
+      const res = await fetch(`${API_BASE_URL}/api/pos/orders/${settleModalOrder.id}/payments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -341,7 +342,7 @@ export default function PosPage() {
   // Accept QR Order
   const handleAcceptOrder = async (orderId: string) => {
     try {
-      const res = await fetch(`http://localhost:4000/api/pos/orders/${orderId}/accept`, {
+      const res = await fetch(`${API_BASE_URL}/api/pos/orders/${orderId}/accept`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${staffToken}` },
       });
@@ -358,7 +359,7 @@ export default function PosPage() {
     if (!rejectionReason.trim()) return;
 
     try {
-      const res = await fetch(`http://localhost:4000/api/pos/orders/${orderId}/reject`, {
+      const res = await fetch(`${API_BASE_URL}/api/pos/orders/${orderId}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

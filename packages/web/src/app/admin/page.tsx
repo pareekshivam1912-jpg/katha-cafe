@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { API_BASE_URL } from '../../config/api';
 
 interface InventoryItem {
   id: string;
@@ -68,7 +69,7 @@ export default function AdminPage() {
   useEffect(() => {
     async function loginAdminMock() {
       try {
-        const res = await fetch('http://localhost:4000/api/auth/login', {
+        const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -84,7 +85,7 @@ export default function AdminPage() {
           setAuthError('Admin access required. Please log in.');
         }
       } catch (err) {
-        setAuthError('Cannot reach API server at http://localhost:4000.');
+        setAuthError(`Cannot reach API server at ${API_BASE_URL}.`);
       }
     }
 
@@ -96,7 +97,7 @@ export default function AdminPage() {
     if (!staffToken) return;
     setLoadingInventory(true);
     try {
-      const res = await fetch('http://localhost:4000/api/admin/inventory', {
+      const res = await fetch(`${API_BASE_URL}/api/admin/inventory`, {
         headers: { Authorization: `Bearer ${staffToken}` },
       });
       if (res.ok) {
@@ -117,13 +118,13 @@ export default function AdminPage() {
     setLoadingReports(true);
     try {
       const [salesRes, mixRes, recRes] = await Promise.all([
-        fetch('http://localhost:4000/api/admin/reports/sales/daily', {
+        fetch(`${API_BASE_URL}/api/admin/reports/sales/daily`, {
           headers: { Authorization: `Bearer ${staffToken}` },
         }),
-        fetch('http://localhost:4000/api/admin/reports/sales/product-mix', {
+        fetch(`${API_BASE_URL}/api/admin/reports/sales/product-mix`, {
           headers: { Authorization: `Bearer ${staffToken}` },
         }),
-        fetch('http://localhost:4000/api/admin/reports/reconciliation', {
+        fetch(`${API_BASE_URL}/api/admin/reports/reconciliation`, {
           headers: { Authorization: `Bearer ${staffToken}` },
         }),
       ]);
@@ -168,7 +169,7 @@ export default function AdminPage() {
     setInvSuccess(null);
 
     try {
-      const res = await fetch('http://localhost:4000/api/admin/inventory', {
+      const res = await fetch(`${API_BASE_URL}/api/admin/inventory`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -213,7 +214,7 @@ export default function AdminPage() {
     }
 
     try {
-      const res = await fetch(`http://localhost:4000/api/admin/inventory/${adjustingItem.id}/adjust`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/inventory/${adjustingItem.id}/adjust`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

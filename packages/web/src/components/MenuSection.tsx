@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config/api';
 
 interface MenuItem {
   id: string;
@@ -27,7 +28,7 @@ export const MenuSection: React.FC = () => {
   useEffect(() => {
     async function fetchMenu() {
       try {
-        const res = await fetch('http://localhost:4000/api/menu');
+        const res = await fetch(`${API_BASE_URL}/api/menu`);
         if (res.ok) {
           const data = await res.json();
           if (data.categories && data.categories.length > 0) {
