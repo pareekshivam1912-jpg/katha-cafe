@@ -88,7 +88,14 @@ ordersRouter.post('/orders', async (req: Request, res: Response) => {
         'SELECT id, status FROM table_sessions WHERE id = $1',
         [sessionId]
       );
-      if (sessionRes.rows.length > 0 && sessionRes.rows[0].status === 'OPEN') {
+      if (sessionRes.rows.length > 0) {
+        if (sessionRes.rows[0].status === 'CLOSED') {
+          res.status(400).json({
+            error: 'SessionClosed',
+            message: 'This table session has ended. Please ask staff for assistance.',
+          });
+          return;
+        }
         resolvedSessionId = sessionRes.rows[0].id;
       }
     }
@@ -191,6 +198,13 @@ ordersRouter.post('/orders', async (req: Request, res: Response) => {
 
     for (const reqItem of items) {
       let matched = findDbItem(reqItem);
+      if (matched && !matched.is_available) {
+        res.status(400).json({
+          error: 'ItemUnavailable',
+          message: `Item '${matched.name}' is currently unavailable.`,
+        });
+        return;
+      }
       if (!matched) {
         if (!defaultCatId) {
           const catRes = await db.query<{ id: string }>(

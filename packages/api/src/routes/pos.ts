@@ -168,6 +168,13 @@ posRouter.post('/orders', async (req: Request, res: Response) => {
 
     for (const orderItem of items) {
       let menuItem = findDbItem(orderItem);
+      if (menuItem && !menuItem.is_available) {
+        res.status(400).json({
+          error: 'BadRequest',
+          message: `Menu item '${menuItem.name}' is currently unavailable`,
+        });
+        return;
+      }
       if (!menuItem) {
         if (!defaultCatId) {
           const catRes = await db.query<{ id: string }>(

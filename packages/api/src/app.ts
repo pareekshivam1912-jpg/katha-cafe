@@ -45,6 +45,7 @@ export function createApp(): Express {
   app.use('/api/kds', kdsRouter);
   app.use('/api/admin', inventoryRouter);
   app.use('/api/admin', reportsRouter);
+  app.use('/api/reports', reportsRouter);
 
   // 404 handler
   app.use((_req, res) => {

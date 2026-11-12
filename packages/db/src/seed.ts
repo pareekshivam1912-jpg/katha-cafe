@@ -115,6 +115,31 @@ export async function seedMockData(db?: DbClient): Promise<void> {
     );
   }
 
+  // Seed sample inventory items for stock tracking & low stock alerts
+  const sampleInventory = [
+    { name: 'Full Cream Milk', unit: 'litres', quantity: 24.5, reorderLevel: 10.0 },
+    { name: 'Assam Tea Leaves (Special Blend)', unit: 'kg', quantity: 6.2, reorderLevel: 2.0 },
+    { name: 'Arabica Coffee Beans (Dark Roast)', unit: 'kg', quantity: 4.8, reorderLevel: 2.0 },
+    { name: 'Amul Salted Butter Block', unit: 'kg', quantity: 8.5, reorderLevel: 3.0 },
+    { name: 'Fresh Sandwich Bread', unit: 'packets', quantity: 18, reorderLevel: 5 },
+    { name: 'Mozzarella Diced Cheese', unit: 'kg', quantity: 1.8, reorderLevel: 3.0 },
+    { name: 'Potatoes (Aloo)', unit: 'kg', quantity: 35.0, reorderLevel: 15.0 },
+    { name: 'Fresh Pav Buns', unit: 'packets', quantity: 28, reorderLevel: 8 },
+    { name: 'Mint & Coriander Chutney', unit: 'kg', quantity: 1.2, reorderLevel: 2.0 },
+    { name: 'Special Chaat Masala', unit: 'kg', quantity: 3.0, reorderLevel: 1.0 },
+  ];
+
+  for (const inv of sampleInventory) {
+    await client.query(
+      `
+      INSERT INTO inventory_items (name, unit, quantity, reorder_level, is_active)
+      VALUES ($1, $2, $3, $4, TRUE)
+      ON CONFLICT DO NOTHING;
+      `,
+      [inv.name, inv.unit, inv.quantity, inv.reorderLevel]
+    );
+  }
+
   // Also import canonical menu items
   await seedMenuData(client);
 

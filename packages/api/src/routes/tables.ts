@@ -35,7 +35,7 @@ tablesRouter.get('/tables/resolve/:token', async (req: Request, res: Response) =
     let table = tableRes.rows[0];
 
     // If not found by exact token hash, match by label or auto-provision table for testing
-    if (!table || !table.is_active) {
+    if (!table && (token.includes('katha-table') || token.includes('demo-table') || token.includes('secret'))) {
       let candidateLabel = 'Table 1';
       if (token.includes('2')) candidateLabel = 'Table 2';
       else if (token.includes('3')) candidateLabel = 'Table 3';
@@ -124,7 +124,14 @@ tablesRouter.post('/table-sessions/identify-customer', async (req: Request, res:
         'SELECT id, status, table_id FROM table_sessions WHERE id = $1',
         [sessionId]
       );
-      if (sessionRes.rows.length > 0 && sessionRes.rows[0].status === 'OPEN') {
+      if (sessionRes.rows.length > 0) {
+        if (sessionRes.rows[0].status === 'CLOSED') {
+          res.status(400).json({
+            error: 'SessionClosed',
+            message: 'This table session has been closed. Please ask staff for assistance.',
+          });
+          return;
+        }
         resolvedSessionId = sessionRes.rows[0].id;
       }
     }

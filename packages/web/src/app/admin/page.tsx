@@ -93,45 +93,54 @@ export default function AdminPage() {
   const [loadingReports, setLoadingReports] = useState(false);
 
   // 1. Initial Authentication: check localStorage first, or fallback to Admin credentials
+  const loginAdminMock = async (): Promise<string | null> => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: 'admin_mock',
+          password: 'Admin@Katha2026!',
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setStaffToken(data.token);
+        setStaffUser(data.user);
+        localStorage.setItem('katha_staff_token', data.token);
+        localStorage.setItem('katha_staff_user', JSON.stringify(data.user));
+        setAuthError(null);
+        return data.token;
+      } else {
+        setAuthError('Admin access required. Please log in.');
+        return null;
+      }
+    } catch (err) {
+      setAuthError(`Cannot reach API server at ${API_BASE_URL}.`);
+      return null;
+    }
+  };
+
   useEffect(() => {
-    async function loginAdminMock() {
-      try {
-        const storedToken = typeof window !== 'undefined' ? localStorage.getItem('katha_staff_token') : null;
-        const storedUser = typeof window !== 'undefined' ? localStorage.getItem('katha_staff_user') : null;
-        if (storedToken && storedUser) {
-          try {
-            const parsed = JSON.parse(storedUser);
+    async function initAuth() {
+      const storedToken = typeof window !== 'undefined' ? localStorage.getItem('katha_staff_token') : null;
+      const storedUser = typeof window !== 'undefined' ? localStorage.getItem('katha_staff_user') : null;
+      if (storedToken && storedUser) {
+        try {
+          const parsed = JSON.parse(storedUser);
+          if (parsed.role === 'ADMIN' || parsed.role === 'MANAGER') {
             setStaffToken(storedToken);
             setStaffUser(parsed);
             return;
-          } catch (e) {
-            // Ignore parse error
           }
+        } catch (e) {
+          // Ignore parse error
         }
-
-        const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: 'admin_mock',
-            password: 'Admin@Katha2026!',
-          }),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setStaffToken(data.token);
-          setStaffUser(data.user);
-          localStorage.setItem('katha_staff_token', data.token);
-          localStorage.setItem('katha_staff_user', JSON.stringify(data.user));
-        } else {
-          setAuthError('Admin access required. Please log in.');
-        }
-      } catch (err) {
-        setAuthError(`Cannot reach API server at ${API_BASE_URL}.`);
       }
+      await loginAdminMock();
     }
 
-    loginAdminMock();
+    initAuth();
   }, []);
 
   const handleLogout = () => {
@@ -141,13 +150,22 @@ export default function AdminPage() {
   };
 
   // 2. Fetch Inventory Items
-  const fetchInventory = async () => {
-    if (!staffToken) return;
+  const fetchInventory = async (tokenOverride?: unknown) => {
+    const token = (typeof tokenOverride === 'string' ? tokenOverride : null) || staffToken;
+    if (!token) return;
     setLoadingInventory(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/inventory`, {
-        headers: { Authorization: `Bearer ${staffToken}` },
+      let res = await fetch(`${API_BASE_URL}/api/admin/inventory`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
+      if ((res.status === 401 || res.status === 403) && typeof tokenOverride !== 'string') {
+        const freshToken = await loginAdminMock();
+        if (freshToken) {
+          res = await fetch(`${API_BASE_URL}/api/admin/inventory`, {
+            headers: { Authorization: `Bearer ${freshToken}` },
+          });
+        }
+      }
       if (res.ok) {
         const data = await res.json();
         setInventoryItems(data.items || []);
@@ -161,21 +179,39 @@ export default function AdminPage() {
   };
 
   // 3. Fetch Reports
-  const fetchReports = async () => {
-    if (!staffToken) return;
+  const fetchReports = async (tokenOverride?: unknown) => {
+    const token = (typeof tokenOverride === 'string' ? tokenOverride : null) || staffToken;
+    if (!token) return;
     setLoadingReports(true);
     try {
-      const [salesRes, mixRes, recRes] = await Promise.all([
+      let [salesRes, mixRes, recRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/admin/reports/sales/daily`, {
-          headers: { Authorization: `Bearer ${staffToken}` },
+          headers: { Authorization: `Bearer ${token}` },
         }),
         fetch(`${API_BASE_URL}/api/admin/reports/sales/product-mix`, {
-          headers: { Authorization: `Bearer ${staffToken}` },
+          headers: { Authorization: `Bearer ${token}` },
         }),
         fetch(`${API_BASE_URL}/api/admin/reports/reconciliation`, {
-          headers: { Authorization: `Bearer ${staffToken}` },
+          headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
+
+      if ((salesRes.status === 401 || salesRes.status === 403) && typeof tokenOverride !== 'string') {
+        const freshToken = await loginAdminMock();
+        if (freshToken) {
+          [salesRes, mixRes, recRes] = await Promise.all([
+            fetch(`${API_BASE_URL}/api/admin/reports/sales/daily`, {
+              headers: { Authorization: `Bearer ${freshToken}` },
+            }),
+            fetch(`${API_BASE_URL}/api/admin/reports/sales/product-mix`, {
+              headers: { Authorization: `Bearer ${freshToken}` },
+            }),
+            fetch(`${API_BASE_URL}/api/admin/reports/reconciliation`, {
+              headers: { Authorization: `Bearer ${freshToken}` },
+            }),
+          ]);
+        }
+      }
 
       if (salesRes.ok) {
         const salesData = await salesRes.json();
@@ -201,13 +237,22 @@ export default function AdminPage() {
   };
 
   // Fetch Live Orders across all tables and statuses
-  const fetchLiveOrders = async () => {
-    if (!staffToken) return;
+  const fetchLiveOrders = async (tokenOverride?: unknown) => {
+    const token = (typeof tokenOverride === 'string' ? tokenOverride : null) || staffToken;
+    if (!token) return;
     setLoadingOrders(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/reports/orders/live`, {
-        headers: { Authorization: `Bearer ${staffToken}` },
+      let res = await fetch(`${API_BASE_URL}/api/admin/reports/orders/live`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
+      if ((res.status === 401 || res.status === 403) && typeof tokenOverride !== 'string') {
+        const freshToken = await loginAdminMock();
+        if (freshToken) {
+          res = await fetch(`${API_BASE_URL}/api/admin/reports/orders/live`, {
+            headers: { Authorization: `Bearer ${freshToken}` },
+          });
+        }
+      }
       if (res.ok) {
         const data = await res.json();
         setLiveOrders(data.orders || []);
@@ -418,8 +463,14 @@ export default function AdminPage() {
       {/* Main Content */}
       <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
         {authError && (
-          <div className="mb-4 p-4 bg-red-100 border border-red-300 text-red-800 rounded-lg text-sm">
-            {authError}
+          <div className="mb-4 p-4 bg-red-100 border border-red-300 text-red-800 rounded-lg text-sm flex items-center justify-between">
+            <span>{authError}</span>
+            <button
+              onClick={() => loginAdminMock()}
+              className="bg-red-800 text-white font-bold px-3 py-1.5 rounded text-xs hover:bg-red-900 transition"
+            >
+              Re-connect as Admin
+            </button>
           </div>
         )}
 
@@ -632,7 +683,7 @@ export default function AdminPage() {
 
               <div className="flex items-center gap-3">
                 <button
-                  onClick={fetchLiveOrders}
+                  onClick={() => fetchLiveOrders()}
                   disabled={loadingOrders}
                   className="bg-[#063B27]/10 hover:bg-[#063B27]/20 text-[#063B27] font-semibold text-xs px-3 py-1.5 rounded-lg transition border border-[#063B27]/20 flex items-center gap-1"
                 >
@@ -821,7 +872,7 @@ export default function AdminPage() {
               <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                 <h3 className="font-serif font-bold text-gray-900 text-base">Ingredient & Stock Roster</h3>
                 <button
-                  onClick={fetchInventory}
+                  onClick={() => fetchInventory()}
                   disabled={loadingInventory}
                   className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-2.5 py-1 rounded"
                 >

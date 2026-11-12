@@ -10,7 +10,7 @@ reportsRouter.use(requireAuth);
 reportsRouter.use(requireRole(['MANAGER', 'ADMIN']));
 
 // GET /reports/sales/daily - Daily Sales Summary (strictly settled CLOSED orders with PAID payments)
-reportsRouter.get('/reports/sales/daily', async (req: Request, res: Response) => {
+reportsRouter.get(['/reports/sales/daily', '/sales/daily'], async (req: Request, res: Response) => {
   const parse = salesReportQuerySchema.safeParse(req.query);
   if (!parse.success) {
     res.status(400).json({
@@ -144,7 +144,7 @@ reportsRouter.get('/reports/sales/daily', async (req: Request, res: Response) =>
 });
 
 // GET /reports/sales/product-mix - Product mix and top-selling items
-reportsRouter.get('/reports/sales/product-mix', async (_req: Request, res: Response) => {
+reportsRouter.get(['/reports/sales/product-mix', '/sales/product-mix'], async (_req: Request, res: Response) => {
   try {
     const db = await getDb();
 
@@ -186,7 +186,7 @@ reportsRouter.get('/reports/sales/product-mix', async (_req: Request, res: Respo
 });
 
 // GET /reports/reconciliation - End-of-day Cash & Payment Reconciliation
-reportsRouter.get('/reports/reconciliation', async (_req: Request, res: Response) => {
+reportsRouter.get(['/reports/reconciliation', '/reconciliation'], async (_req: Request, res: Response) => {
   try {
     const db = await getDb();
 
@@ -246,8 +246,8 @@ reportsRouter.get('/reports/reconciliation', async (_req: Request, res: Response
   }
 });
 
-// GET /reports/orders/live - Live and recent orders across all statuses for Admin panel
-reportsRouter.get('/reports/orders/live', async (_req: Request, res: Response) => {
+// GET /reports/orders/live (and /orders/live) - Live and recent orders across all statuses for Admin panel
+reportsRouter.get(['/reports/orders/live', '/orders/live'], async (_req: Request, res: Response) => {
   try {
     const db = await getDb();
     const ordersRes = await db.query<{
